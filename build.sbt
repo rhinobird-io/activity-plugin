@@ -1,4 +1,4 @@
-name := """play-scala"""
+name := """activity-plugin"""
 
 version := "1.0-SNAPSHOT"
 
