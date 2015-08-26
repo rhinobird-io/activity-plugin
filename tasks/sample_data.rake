@@ -36,7 +36,7 @@ namespace :db do
                              speech_id: Faker::Number.between(1, 20),
                              role: Faker::Number.between(0, 10) == 10 ? "speaker" : "audience",
                              point: Faker::Number.between(1, 50),
-                             is_comment: false
+                             commented: false
                          })
       end
       20.times do
