@@ -18,7 +18,7 @@ ActiveRecord::Schema.define(version: 20150825093734) do
     t.integer  "speech_id"
     t.string   "role"
     t.integer  "point"
-    t.boolean  "is_comment"
+    t.boolean  "commented"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
