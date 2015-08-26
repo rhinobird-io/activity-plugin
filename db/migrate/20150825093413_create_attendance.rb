@@ -5,7 +5,7 @@ class CreateAttendance < ActiveRecord::Migration
       t.belongs_to :speech, index: true
       t.string :role
       t.integer :point
-      t.integer :comment
+      t.boolean :is_comment
 
       t.timestamps
     end

@@ -1,6 +1,6 @@
 require_relative 'user'
 require_relative 'speech'
-require_relative 'audience'
+require_relative 'audienceregistration'
 require_relative 'attendance'
-require_relative 'good'
+require_relative 'prize'
 require_relative 'exchange'
