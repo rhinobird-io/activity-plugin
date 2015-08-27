@@ -9,7 +9,7 @@ class Constants
   AUDITING = "auditing"
   APPROVED = "approved"
   CONFIRMED = "confirmed"
-  FINISH = "finish"
+  FINISHED = "finished"
   CLOSED = "closed"
 
   WEEKLY = "weekly"

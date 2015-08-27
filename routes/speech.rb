@@ -8,7 +8,7 @@ class App < Sinatra::Base
   get '/speeches' do
     status = params[:status]
     if status.nil?
-      status = Constants::CONFIRMED + ',' + Constants::FINISH
+      status = Constants::CONFIRMED + ',' + Constants::FINISHED
     end
     Speech.where(status: status.gsub(/\s+/, '').split(',')).order(time: :desc).to_json
   end
@@ -54,7 +54,20 @@ class App < Sinatra::Base
   delete '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::NEW
-      Speech.destroy!(params[:speech_id])
+      # Speech.destroy!(params[:speech_id])
+      speech.destroy!
+      200
+    else
+      400
+    end
+  end
+
+  # upload resource to the speech
+  post '/speeches/:speech_id/upload' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::CONFIRMED
+      speech.resource_url = @body['resource_url']
+      speech.save!
       200
     else
       400
@@ -72,10 +85,10 @@ class App < Sinatra::Base
       400
     end
   end
-  # auditing -> new, by speaker
+  # auditing || approved -> new, by speaker
   post '/speeches/:speech_id/withdraw' do
     speech = Speech.find(params[:speech_id])
-    if speech.status == Constants::AUDITING
+    if speech.status == Constants::AUDITING || speech.status == Constants::APPROVED
       speech.status = Constants::NEW
       speech.save!
       200
@@ -139,6 +152,17 @@ class App < Sinatra::Base
       400
     end
   end
+  # confirmed -> finish
+  post '/speeches/:speech_id/finish' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::CONFIRMED
+      speech.status = Constants::FINISHED
+      speech.save!
+      200
+    else
+      400
+    end
+  end
 
   get '/speeches/:speech_id/audiences' do
     Speech.find(params[:speech_id]).audiences.to_json
@@ -172,8 +196,7 @@ class App < Sinatra::Base
         end
         attendance.save!
         user = User.find(@body['user_id'])
-        user.point += @body['point']
-        user.point += @body['commented'] ? 1 : 0
+        user.change_point(@body['point'] + (@body['commented'] ? 1 : 0))
         user.save!
       end
     end
@@ -186,8 +209,7 @@ class App < Sinatra::Base
     until attendance.empty?
       ActiveRecord::Base.transaction do
         user = User.find(params[:user_id])
-        user.point -= attendance.take.point
-        user.point -= attendance.take.commented ? 1 : 0
+        user.change_point(- attendance.take.point - (attendance.take.commented ? 1 : 0))
         user.save!
 
         Attendance.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])

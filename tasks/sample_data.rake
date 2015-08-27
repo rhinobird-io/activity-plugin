@@ -9,7 +9,7 @@ namespace :db do
       20.times do
         User.create!({
            point: Faker::Number.number(4),
-           role: 'user'
+           role: Constants::USER
          })
       end
       20.times do
@@ -18,8 +18,8 @@ namespace :db do
              description: Faker::Lorem.paragraph,
              resource_url: '',
              user_id: Faker::Number.between(1, 20),
-             status: 'new',
-             category: Faker::Number.between(0, 1) == 0 ? "weekly" : "monthly",
+             status: Constants::NEW,
+             category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
              time: Faker::Time.forward(100),
              expected_duration: Faker::Number.between(10, 180)
          })
@@ -34,7 +34,7 @@ namespace :db do
         Attendance.create!({
                              user_id: Faker::Number.between(1, 20),
                              speech_id: Faker::Number.between(1, 20),
-                             role: Faker::Number.between(0, 10) == 10 ? "speaker" : "audience",
+                             role: Faker::Number.between(0, 10) == 10 ? Constants::SPEAKER : Constants::AUDIENCE,
                              point: Faker::Number.between(1, 50),
                              commented: false
                          })

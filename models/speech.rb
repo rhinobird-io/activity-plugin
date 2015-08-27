@@ -8,8 +8,8 @@ class Speech < ActiveRecord::Base
   # confirmed: speaker agrees the arrangement
   # finish: the speech is finished.
   # closed: close by the speaker or admin
-  validates :status, presence: true, inclusion: {in: ["new", "auditing", "approved", "confirmed", "finish", "closed"], message: "%{value} is not a valid role"}
-  validates :category, presence: true, inclusion: {in: ["weekly", "monthly"], message: "%{value} is not a valid role"}
+  validates :status, presence: true, inclusion: {in: [Constants::NEW, Constants::AUDITING, Constants::APPROVED, Constants::CONFIRMED, Constants::FINISHED, Constants::CLOSED], message: "%{value} is not a valid role"}
+  validates :category, presence: true, inclusion: {in: [Constants::WEEKLY, Constants::MONTHLY], message: "%{value} is not a valid role"}
 
   belongs_to :speaker, :class_name => :User, :foreign_key => "user_id"
 
