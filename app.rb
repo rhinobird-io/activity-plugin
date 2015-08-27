@@ -3,7 +3,38 @@ require 'sinatra/activerecord'
 
 
 class App < Sinatra::Base
+  set :show_exceptions, :after_handler
+  error ActiveRecord::RecordInvalid do
+    status 400
+    body env['sinatra.error'].message
+  end
 
+  error ActiveRecord::RecordNotFound do
+    status 404
+    body env['sinatra.error'].message
+  end
+
+  error ActiveRecord::RecordNotUnique do
+    status 400
+    body env['sinatra.error'].message
+  end
+
+  error do
+    status 500
+    body env['sinatra.error'].message
+  end
+
+
+  before do
+    content_type 'application/json'
+    if request.media_type == 'application/json'
+      body = request.body.read
+      unless body.empty?
+        @body = JSON.parse(body)
+      end
+    end
+  end
+  
 end
 
 require_relative 'helpers/init'
