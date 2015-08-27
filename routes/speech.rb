@@ -7,7 +7,7 @@ class App < Sinatra::Base
   # /speeches?status=auditing,confirmed
   get '/speeches' do
     status = params[:status]
-    if (status.nil?)
+    if status.nil?
       status = Constants::CONFIRMED + ',' + Constants::FINISH
     end
     Speech.where(status: status.gsub(/\s+/, '').split(',')).order(time: :desc).to_json
@@ -18,35 +18,182 @@ class App < Sinatra::Base
     Speech.find(params[:speech_id]).to_json(include: :audiences)
   end
 
+  # add a speech, status = new
+  post '/speeches' do
+    speech = Speech.new(title: @body['title'], description: @body['description'],
+                        user_id: @body['user_id'], expected_duration: @body['expected_duration'],
+                        status: Constants::NEW, category: @body['category'])
+    if speech.category != Constants::WEEKLY && speech.category != Constants::MONTHLY
+      speech.category = Constants::WEEKLY
+    end
+    speech.save!
+    speech.to_json
+  end
+
+  # update the basic information of the speech in 'new' status
+  # only 'new' speeches can be edited
+  put '/speeches/:speech_id' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status != Constants::NEW
+      400
+    else
+      speech.title = @body['title']
+      speech.description = @body['description']
+      speech.expected_duration = @body['expected_duration']
+      speech.category = @body['category']
+      if speech.category != Constants::WEEKLY && speech.category != Constants::MONTHLY
+        speech.category = Constants::WEEKLY
+      end
+      speech.save!
+      speech.to_json
+    end
+  end
+
+  # delete a speech in 'new' status
+  # only 'new' speeches can be deleted
+  delete '/speeches/:speech_id' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::NEW
+      Speech.destroy!(params[:speech_id])
+      200
+    else
+      400
+    end
+  end
+
+  # new -> auditing
+  post '/speeches/:speech_id/submit' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::NEW
+      speech.status = Constants::AUDITING
+      speech.save!
+      200
+    else
+      400
+    end
+  end
+  # auditing -> new, by speaker
+  post '/speeches/:speech_id/withdraw' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::AUDITING
+      speech.status = Constants::NEW
+      speech.save!
+      200
+    else
+      400
+    end
+  end
+  # auditing -> approved
+  post '/speeches/:speech_id/approve' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::AUDITING
+      speech.status = Constants::APPROVED
+      speech.time = @body['time']
+      speech.save!
+      200
+    else
+      400
+    end
+  end
+  # auditing -> new, by admin
+  post '/speeches/:speech_id/reject' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::AUDITING
+      speech.status = Constants::NEW
+      speech.save!
+      200
+    else
+      400
+    end
+  end
+  # approved -> confirmed
+  post '/speeches/:speech_id/agree' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::APPROVED
+      speech.status = Constants::CONFIRMED
+      speech.save!
+      200
+    else
+      400
+    end
+  end
+  # approved -> auditing
+  post '/speeches/:speech_id/disagree' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::APPROVED
+      speech.status = Constants::AUDITING
+      speech.save!
+      200
+    else
+      400
+    end
+  end
+  # confirmed -> closed
+  post '/speeches/:speech_id/close' do
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::CONFIRMED
+      speech.status = Constants::CLOSED
+      speech.save!
+      200
+    else
+      400
+    end
+  end
+
   get '/speeches/:speech_id/audiences' do
     Speech.find(params[:speech_id]).audiences.to_json
   end
 
-  post '/speeches' do
-
-  end
-
-  put '/speeches/:speech_id' do
-
-  end
-
-  delete 'speeches/:speech_id' do
-
-  end
-
   # user apply to be an audience
-  post '/speeches/:speech_id/register' do
-    200
+  post '/speeches/:speech_id/audiences' do
+    audience = AudienceRegistration.new(user_id: @body['user_id'], speech_id: params[:speech_id])
+    audience.save!
+    audience.to_json
   end
 
   # user withdraw his apply to be an audience
-  delete '/speeches/:speech_id/register' do
+  delete '/speeches/:speech_id/audiences/:user_id' do
+    AudienceRegistration.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
     200
   end
 
-  # add participants
-  post '/speeches/:speech_id/participants' do
+  get '/speeches/:speech_id/participants' do
+    Speech.find(params[:speech_id]).participants.to_json
+  end
 
+  # add a participant, add point to the user
+  post '/speeches/:speech_id/participants' do
+    until Attendance.exists?(user_id: @body['user_id'], speech_id: params[:speech_id])
+      ActiveRecord::Base.transaction do
+        attendance = Attendance.new(user_id: @body['user_id'], speech_id: params[:speech_id],
+                                    role: @body['role'], point: @body['point'], commented: @body['commented'])
+        if attendance.role != Constants::SPEAKER && attendance.role != Constants::AUDIENCE
+          attendance.role = Constants::AUDIENCE
+        end
+        attendance.save!
+        user = User.find(@body['user_id'])
+        user.point += @body['point']
+        user.point += @body['commented'] ? 1 : 0
+        user.save!
+      end
+    end
+    200
+  end
+
+  # delete a participant, minus point from the user
+  delete '/speeches/:speech_id/participants/:user_id' do
+    attendance = Attendance.where(user_id: params[:user_id], speech_id: params[:speech_id])
+    until attendance.empty?
+      ActiveRecord::Base.transaction do
+        user = User.find(params[:user_id])
+        user.point -= attendance.take.point
+        user.point -= attendance.take.commented ? 1 : 0
+        user.save!
+
+        Attendance.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
+      end
+    end
+    200
   end
 
 end

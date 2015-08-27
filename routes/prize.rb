@@ -9,7 +9,7 @@ class App < Sinatra::Base
   end
 
   # retrieve exchange history of this prize, including users
-  get '/prizes/:prize_id/exchange_history' do
+  get '/prizes/:prize_id/exchanges' do
     Prize.find(params[:prize_id]).exchanges.to_json(include: :user)
   end
 

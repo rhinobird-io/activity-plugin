@@ -12,4 +12,13 @@ class Constants
   FINISH = "finish"
   CLOSED = "closed"
 
+  WEEKLY = "weekly"
+  MONTHLY = "monthly"
+
+  USER = "user"
+  ADMIN = "admin"
+
+  SPEAKER = "speaker"
+  AUDIENCE = "audience"
+
 end
