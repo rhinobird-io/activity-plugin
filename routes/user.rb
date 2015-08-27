@@ -5,9 +5,15 @@ class App < Sinatra::Base
     User.all.to_json
   end
 
-  # retrieve top ten users sorted by point
-  get '/users/topten' do
-    User.order(point: :desc).limit(10).to_json
+  # retrieve users sorted by point
+  # retrieve ten users by default
+  # you can use a query parameter 'limit' to retrieve a specific amount of user
+  get '/users/rank' do
+    limit = params[:limit]
+    if (limit.nil?)
+      limit = 10
+    end
+    User.order(point: :desc).limit(limit).to_json
   end
 
   # retrieve one user
@@ -31,21 +37,14 @@ class App < Sinatra::Base
   end
 
   # retrieve exchange history, including prize information
-  get '/users/:user_id/exchange_history' do
+  get '/users/:user_id/exchanges' do
     User.find(params[:user_id]).exchanges.to_json(include: :prize)
   end
 
-  # add a user
+  # add a normal user
   post '/users' do
-    user = User.new(@body)
+    user = User.new(id: @body['id'], role: 'user', point: 0)
     user.save!
-    user.to_json
-  end
-
-  # update the point of a user
-  put '/users/:user_id' do
-    user = User.find(params[:user_id])
-    user.update(point: @body['point'])
     user.to_json
   end
 
