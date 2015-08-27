@@ -5,10 +5,10 @@ class App < Sinatra::Base
     User.all.to_json
   end
 
-  # retrieve users sorted by point
+  # user rank sorted by point
   # retrieve ten users by default
   # you can use a query parameter 'limit' to retrieve a specific amount of user
-  get '/users/rank' do
+  post '/users/rank' do
     limit = params[:limit]
     if limit.nil?
       limit = 10
