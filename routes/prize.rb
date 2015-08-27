@@ -35,4 +35,26 @@ class App < Sinatra::Base
     200
   end
 
+  get '/exchanges' do
+    Exchange.all.order(exchange_time: :desc).to_json(include: :prize)
+  end
+
+  post '/exchanges' do
+    prize = Prize.find(@body['prize_id'])
+    ActiveRecord::Base.transaction do
+      user = User.find(@body['user_id'])
+      if user.point < prize.price
+        400
+      end
+      user.change_point(- prize.price)
+      user.save!
+
+      exchange = Exchange.new(user_id: @body['user_id'], prize_id: @body['prize_id'],
+                        point: prize.price, exchange_time: Time.now)
+      exchange.save!
+    end
+    200
+  end
+
+
 end

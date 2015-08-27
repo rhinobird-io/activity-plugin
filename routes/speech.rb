@@ -6,10 +6,7 @@ class App < Sinatra::Base
   # use comma to separate each status
   # /speeches?status=auditing,confirmed
   get '/speeches' do
-    status = params[:status]
-    if status.nil?
-      status = Constants::CONFIRMED + ',' + Constants::FINISHED
-    end
+    status = params[:status] || Constants::CONFIRMED + ',' + Constants::FINISHED
     Speech.where(status: status.gsub(/\s+/, '').split(',')).order(time: :desc).to_json
   end
 
@@ -54,7 +51,6 @@ class App < Sinatra::Base
   delete '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::NEW
-      # Speech.destroy!(params[:speech_id])
       speech.destroy!
       200
     else
