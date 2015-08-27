@@ -10,7 +10,7 @@ class App < Sinatra::Base
   # you can use a query parameter 'limit' to retrieve a specific amount of user
   get '/users/rank' do
     limit = params[:limit]
-    if (limit.nil?)
+    if limit.nil?
       limit = 10
     end
     User.order(point: :desc).limit(limit).to_json
