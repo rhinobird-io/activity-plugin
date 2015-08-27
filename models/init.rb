@@ -1,0 +1,6 @@
+require_relative 'user'
+require_relative 'speech'
+require_relative 'audienceregistration'
+require_relative 'attendance'
+require_relative 'prize'
+require_relative 'exchange'
