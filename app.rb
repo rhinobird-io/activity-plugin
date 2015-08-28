@@ -33,6 +33,16 @@ class App < Sinatra::Base
         @body = JSON.parse(body)
       end
     end
+
+    unless request.env['HTTP_X_USER'].nil?
+      @userid = request.env['HTTP_X_USER'].to_i
+      @user = User.find_by_id(@userid)
+      if @user.nil?
+        @user = User.new(id: @userid, role: 'user', point: 0)
+        @user.save!
+      end
+    end
+
   end
   
 end

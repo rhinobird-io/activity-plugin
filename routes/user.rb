@@ -38,12 +38,5 @@ class App < Sinatra::Base
     User.find(params[:user_id]).exchanges.to_json(include: :prize)
   end
 
-  # add a normal user
-  post '/users' do
-    user = User.new(id: @body['id'], role: 'user', point: 0)
-    user.save!
-    user.to_json
-  end
-
 
 end
