@@ -183,7 +183,7 @@ class App < Sinatra::Base
 
   # add a participant, add point to the user
   post '/speeches/:speech_id/participants' do
-    until Attendance.exists?(user_id: @body['user_id'], speech_id: params[:speech_id])
+    unless Attendance.exists?(user_id: @body['user_id'], speech_id: params[:speech_id])
       ActiveRecord::Base.transaction do
         attendance = Attendance.new(user_id: @body['user_id'], speech_id: params[:speech_id],
                                     role: @body['role'], point: @body['point'], commented: @body['commented'])
@@ -202,7 +202,7 @@ class App < Sinatra::Base
   # delete a participant, minus point from the user
   delete '/speeches/:speech_id/participants/:user_id' do
     attendance = Attendance.where(user_id: params[:user_id], speech_id: params[:speech_id])
-    until attendance.empty?
+    unless attendance.empty?
       ActiveRecord::Base.transaction do
         user = User.find(params[:user_id])
         user.change_point(- attendance.take.point - (attendance.take.commented ? 1 : 0))
