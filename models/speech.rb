@@ -1,7 +1,7 @@
 class Speech < ActiveRecord::Base
   validates :title, presence: true
-  validates :user_id, presence: true, :numericality => { :greater_than_or_equal_to => 1 }
-  validates :expected_duration, presence: true, :numericality => { :greater_than_or_equal_to => 0 }
+  validates :user_id, presence: true, :numericality => { :greater_than_or_equal_to => 1, :only_integer => true }
+  validates :expected_duration, presence: true, :numericality => { :greater_than_or_equal_to => 0, :only_integer => true }
   # new: newly created, draft.
   # auditing: speaker submits and waits for auditing.
   # approved: admin approves and arranges time for it

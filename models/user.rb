@@ -1,6 +1,6 @@
 class User < ActiveRecord::Base
   validates :role, presence: true, inclusion: {in: [Constants::USER, Constants::ADMIN], message: "%{value} is not a valid role"}
-  validates :point, presence: true, :numericality => { :greater_than_or_equal_to => 0 }
+  validates :point, presence: true, :numericality => { :greater_than_or_equal_to => 0, :only_integer => true }
 
   # speeches whose speaker is this user
   has_many :speeches
