@@ -23,7 +23,7 @@ class App < Sinatra::Base
   # add a speech, status = new
   post '/speeches' do
     speech = Speech.new(title: @body['title'], description: @body['description'],
-                        user_id: @body['user_id'], expected_duration: @body['expected_duration'],
+                        user_id: @userid, expected_duration: @body['expected_duration'],
                         status: Constants::NEW, category: @body['category'])
     speech.save!
     speech.to_json
@@ -33,6 +33,7 @@ class App < Sinatra::Base
   # only 'new' speeches can be edited
   put '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
+    self_required! speech.user_id
     if speech.status != Constants::NEW
       400
     else
@@ -49,6 +50,7 @@ class App < Sinatra::Base
   # only 'new' speeches can be deleted
   delete '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
+    self_required! speech.user_id
     if speech.status == Constants::NEW
       speech.destroy!
       200
@@ -60,6 +62,7 @@ class App < Sinatra::Base
   # upload resource to the speech
   post '/speeches/:speech_id/upload' do
     speech = Speech.find(params[:speech_id])
+    self_required! speech.user_id
     if speech.status == Constants::CONFIRMED
       speech.resource_url = @body['resource_url']
       speech.save!
@@ -72,6 +75,7 @@ class App < Sinatra::Base
   # new -> auditing
   post '/speeches/:speech_id/submit' do
     speech = Speech.find(params[:speech_id])
+    self_required! speech.user_id
     if speech.status == Constants::NEW
       speech.status = Constants::AUDITING
       speech.save!
@@ -83,6 +87,7 @@ class App < Sinatra::Base
   # auditing || approved -> new, by speaker
   post '/speeches/:speech_id/withdraw' do
     speech = Speech.find(params[:speech_id])
+    self_required! speech.user_id
     if speech.status == Constants::AUDITING || speech.status == Constants::APPROVED
       speech.status = Constants::NEW
       speech.save!
@@ -93,6 +98,7 @@ class App < Sinatra::Base
   end
   # auditing -> approved
   post '/speeches/:speech_id/approve' do
+    admin_required!
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::AUDITING
       speech.status = Constants::APPROVED
@@ -105,6 +111,7 @@ class App < Sinatra::Base
   end
   # auditing -> new, by admin
   post '/speeches/:speech_id/reject' do
+    admin_required!
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::AUDITING
       speech.status = Constants::NEW
@@ -117,6 +124,7 @@ class App < Sinatra::Base
   # approved -> confirmed
   post '/speeches/:speech_id/agree' do
     speech = Speech.find(params[:speech_id])
+    self_required! speech.user_id
     if speech.status == Constants::APPROVED
       speech.status = Constants::CONFIRMED
       speech.save!
@@ -128,6 +136,7 @@ class App < Sinatra::Base
   # approved -> auditing
   post '/speeches/:speech_id/disagree' do
     speech = Speech.find(params[:speech_id])
+    self_required! speech.user_id
     if speech.status == Constants::APPROVED
       speech.status = Constants::AUDITING
       speech.save!
@@ -138,6 +147,7 @@ class App < Sinatra::Base
   end
   # confirmed -> closed
   post '/speeches/:speech_id/close' do
+    admin_required!
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::CONFIRMED
       speech.status = Constants::CLOSED
@@ -149,6 +159,7 @@ class App < Sinatra::Base
   end
   # confirmed -> finish
   post '/speeches/:speech_id/finish' do
+    admin_required!
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::CONFIRMED
       speech.status = Constants::FINISHED
@@ -165,13 +176,14 @@ class App < Sinatra::Base
 
   # user apply to be an audience
   post '/speeches/:speech_id/audiences' do
-    audience = AudienceRegistration.new(user_id: @body['user_id'], speech_id: params[:speech_id])
+    audience = AudienceRegistration.new(user_id: @userid, speech_id: params[:speech_id])
     audience.save!
     audience.to_json
   end
 
   # user withdraw his apply to be an audience
   delete '/speeches/:speech_id/audiences/:user_id' do
+    self_required! params[:user_id].to_i
     AudienceRegistration.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
     200
   end
@@ -182,6 +194,7 @@ class App < Sinatra::Base
 
   # add a participant, add point to the user
   post '/speeches/:speech_id/participants' do
+    admin_required!
     unless Attendance.exists?(user_id: @body['user_id'], speech_id: params[:speech_id])
       ActiveRecord::Base.transaction do
         attendance = Attendance.new(user_id: @body['user_id'], speech_id: params[:speech_id],
@@ -197,6 +210,7 @@ class App < Sinatra::Base
 
   # delete a participant, minus point from the user
   delete '/speeches/:speech_id/participants/:user_id' do
+    admin_required!
     attendance = Attendance.where(user_id: params[:user_id], speech_id: params[:speech_id])
     unless attendance.empty?
       ActiveRecord::Base.transaction do

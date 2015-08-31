@@ -14,6 +14,7 @@ class App < Sinatra::Base
   end
 
   post '/prizes' do
+    admin_required!
     prize = Prize.new(name: @body['name'], description: @body['description'],
                         picture_url: @body['picture_url'], price: @body['price'])
     prize.save!
@@ -21,6 +22,7 @@ class App < Sinatra::Base
   end
 
   put '/prizes/:prize_id' do
+    admin_required!
     prize = Prize.find(params[:prize_id])
     prize.name = @body['name']
     prize.description = @body['description']
@@ -31,6 +33,7 @@ class App < Sinatra::Base
   end
 
   delete '/prizes/:prize_id' do
+    admin_required!
     Prize.find(params[:prize_id]).destroy!
     200
   end
@@ -41,15 +44,14 @@ class App < Sinatra::Base
 
   post '/exchanges' do
     prize = Prize.find(@body['prize_id'])
-    user = User.find(@body['user_id'])
-    if user.point < prize.price
+    if @user.point < prize.price
       status 400
       body 'The point of this user is not enough to exchange this prize.'
     else
       ActiveRecord::Base.transaction do
-        user.change_point(- prize.price)
-        user.save!
-        exchange = Exchange.new(user_id: @body['user_id'], prize_id: @body['prize_id'],
+        @user.change_point(- prize.price)
+        @user.save!
+        exchange = Exchange.new(user_id: @userid, prize_id: @body['prize_id'],
                           point: prize.price, exchange_time: Time.now)
         exchange.save!
       end

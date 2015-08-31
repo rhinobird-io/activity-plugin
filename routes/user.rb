@@ -18,9 +18,15 @@ class App < Sinatra::Base
       User.find(params[:user_id]).to_json
   end
 
-  # retrieve speeches this user makes
+  # retrieve speeches of one user
+  # if current user is the target user, return all speeches
+  # otherwise, return confirmed and finished speeches
   get '/users/:user_id/speeches' do
-    User.find(params[:user_id]).speeches.to_json
+    if @userid == params[:user_id].to_i
+      User.find(params[:user_id]).speeches.to_json
+    else
+      User.find(params[:user_id]).speeches.where(status: [Constants::CONFIRMED, Constants::FINISHED]).to_json
+    end
   end
 
   # retrieve speeches this user have applied as an audience
