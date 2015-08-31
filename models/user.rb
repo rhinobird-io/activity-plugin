@@ -17,4 +17,9 @@ class User < ActiveRecord::Base
   has_many :exchanges
   # prizes this user has exchanged
   has_many :prizes, :through => :exchanges
+
+  def as_json(options={})
+    options[:except] ||= [:created_at, :updated_at]
+    super(options)
+  end
 end
