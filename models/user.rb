@@ -18,9 +18,13 @@ class User < ActiveRecord::Base
   # prizes this user has exchanged
   has_many :prizes, :through => :exchanges
 
+  def is_admin
+    self.role == Constants::ADMIN
+  end
+
   def change_point(offset)
     self.point += offset
-    if (self.point < 0)
+    if self.point < 0
       self.point = 0
     end
   end

@@ -10,9 +10,14 @@ class App < Sinatra::Base
     Speech.where(status: status.gsub(/\s+/, '').split(',')).order(time: :desc).to_json
   end
 
-  # retrieve a speech, including applied audiences
+  # retrieve a speech, including applied audiences (not finished) or participants (finished)
   get '/speeches/:speech_id' do
-    Speech.find(params[:speech_id]).to_json(include: :audiences)
+    speech = Speech.find(params[:speech_id])
+    if speech.status == Constants::FINISHED
+      speech.to_json(include: :participants)
+    else
+      speech.to_json(include: :audiences)
+    end
   end
 
   # add a speech, status = new
@@ -20,9 +25,6 @@ class App < Sinatra::Base
     speech = Speech.new(title: @body['title'], description: @body['description'],
                         user_id: @body['user_id'], expected_duration: @body['expected_duration'],
                         status: Constants::NEW, category: @body['category'])
-    if speech.category != Constants::WEEKLY && speech.category != Constants::MONTHLY
-      speech.category = Constants::WEEKLY
-    end
     speech.save!
     speech.to_json
   end
@@ -38,9 +40,6 @@ class App < Sinatra::Base
       speech.description = @body['description']
       speech.expected_duration = @body['expected_duration']
       speech.category = @body['category']
-      if speech.category != Constants::WEEKLY && speech.category != Constants::MONTHLY
-        speech.category = Constants::WEEKLY
-      end
       speech.save!
       speech.to_json
     end
@@ -187,9 +186,6 @@ class App < Sinatra::Base
       ActiveRecord::Base.transaction do
         attendance = Attendance.new(user_id: @body['user_id'], speech_id: params[:speech_id],
                                     role: @body['role'], point: @body['point'], commented: @body['commented'])
-        if attendance.role != Constants::SPEAKER && attendance.role != Constants::AUDIENCE
-          attendance.role = Constants::AUDIENCE
-        end
         attendance.save!
         user = User.find(@body['user_id'])
         user.change_point(@body['point'] + (@body['commented'] ? 1 : 0))
