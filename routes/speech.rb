@@ -129,8 +129,9 @@ class App < Sinatra::Base
     if speech.status == Constants::APPROVED
       ActiveRecord::Base.transaction do
         speech.status = Constants::CONFIRMED
+        event = CalendarHelper::post_event(request.cookies, speech.title, speech.description, speech.time, speech.time, @userid)
+        speech.event_id = JSON.parse(event)['id']
         speech.save!
-        CalendarHelper::post_event(request.cookies, speech.title, speech.description, speech.time, speech.time)
       end
       200
     else
@@ -154,8 +155,11 @@ class App < Sinatra::Base
     admin_required!
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::CONFIRMED
-      speech.status = Constants::CLOSED
-      speech.save!
+      ActiveRecord::Base.transaction do
+        CalendarHelper::delete_event(request.cookies, speech.event_id)
+        speech.status = Constants::CLOSED
+        speech.save!
+      end
       200
     else
       400
