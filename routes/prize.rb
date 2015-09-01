@@ -44,12 +44,12 @@ class App < Sinatra::Base
 
   post '/exchanges' do
     prize = Prize.find(@body['prize_id'])
-    if @user.point < prize.price
+    if @user.point_available < prize.price
       status 400
-      body 'The point of this user is not enough to exchange this prize.'
+      body 'The available point of this user is not enough to exchange this prize.'
     else
       ActiveRecord::Base.transaction do
-        @user.change_point(- prize.price)
+        @user.change_point_available(- prize.price)
         @user.save!
         exchange = Exchange.new(user_id: @userid, prize_id: @body['prize_id'],
                           point: prize.price, exchange_time: Time.now)
