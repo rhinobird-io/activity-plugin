@@ -16,7 +16,8 @@ namespace :db do
            role: Constants::USER
          })
       end
-      20.times do
+
+      10.times do
         Speech.create!({
              title: Faker::Lorem.sentence,
              description: Faker::Lorem.paragraph,
@@ -24,20 +25,81 @@ namespace :db do
              user_id: Faker::Number.between(1, 20),
              status: Constants::NEW,
              category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
-             time: Faker::Time.forward(100),
+             time: nil,
              expected_duration: Faker::Number.between(10, 180)
          })
       end
+      10.times do
+        Speech.create!({
+                           title: Faker::Lorem.sentence,
+                           description: Faker::Lorem.paragraph,
+                           resource_url: '',
+                           user_id: Faker::Number.between(1, 20),
+                           status: Constants::AUDITING,
+                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
+                           time: nil,
+                           expected_duration: Faker::Number.between(10, 180)
+                       })
+      end
+      10.times do
+        Speech.create!({
+                           title: Faker::Lorem.sentence,
+                           description: Faker::Lorem.paragraph,
+                           resource_url: '',
+                           user_id: Faker::Number.between(1, 20),
+                           status: Constants::APPROVED,
+                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
+                           time: Faker::Time.forward(100),
+                           expected_duration: Faker::Number.between(10, 180)
+                       })
+      end
+      10.times do
+        Speech.create!({
+                           title: Faker::Lorem.sentence,
+                           description: Faker::Lorem.paragraph,
+                           resource_url: '',
+                           user_id: Faker::Number.between(1, 20),
+                           status: Constants::CONFIRMED,
+                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
+                           time: Faker::Time.forward(100),
+                           expected_duration: Faker::Number.between(10, 180)
+                       })
+      end
+      10.times do
+        Speech.create!({
+                           title: Faker::Lorem.sentence,
+                           description: Faker::Lorem.paragraph,
+                           resource_url: '',
+                           user_id: Faker::Number.between(1, 20),
+                           status: Constants::FINISHED,
+                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
+                           time: Faker::Time.forward(100),
+                           expected_duration: Faker::Number.between(10, 180)
+                       })
+      end
+      10.times do
+        Speech.create!({
+                           title: Faker::Lorem.sentence,
+                           description: Faker::Lorem.paragraph,
+                           resource_url: '',
+                           user_id: Faker::Number.between(1, 20),
+                           status: Constants::CLOSED,
+                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
+                           time: Faker::Time.forward(100),
+                           expected_duration: Faker::Number.between(10, 180)
+                       })
+      end
+
       20.times do
         AudienceRegistration.create!({
                              user_id: Faker::Number.between(1, 20),
-                             speech_id: Faker::Number.between(1, 20)
+                             speech_id: Faker::Number.between(1, 60)
                          })
       end
       20.times do
         Attendance.create!({
                              user_id: Faker::Number.between(1, 20),
-                             speech_id: Faker::Number.between(1, 20),
+                             speech_id: Faker::Number.between(1, 60),
                              role: Faker::Number.between(0, 10) == 10 ? Constants::SPEAKER : Constants::AUDIENCE,
                              point: Faker::Number.between(1, 50),
                              commented: false
