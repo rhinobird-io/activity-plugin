@@ -44,7 +44,7 @@ class App < Sinatra::Base
       @userid = request.env['HTTP_X_USER'].to_i
       @user = User.find_by_id(@userid)
       if @user.nil?
-        @user = User.new(id: @userid, role: 'user', point: 0)
+        @user = User.new(id: @userid, role: 'user', point_total: 0, point_available: 0)
         @user.save!
       end
     end
