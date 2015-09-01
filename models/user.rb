@@ -1,6 +1,7 @@
 class User < ActiveRecord::Base
   validates :role, presence: true, inclusion: {in: [Constants::USER, Constants::ADMIN], message: "%{value} is not a valid role"}
-  validates :point, presence: true, :numericality => { :greater_than_or_equal_to => 0, :only_integer => true }
+  validates :point_available, presence: true, :numericality => { :greater_than_or_equal_to => 0, :only_integer => true }
+  validates :point_total, presence: true, :numericality => { :greater_than_or_equal_to => 0, :only_integer => true }
 
   # speeches whose speaker is this user
   has_many :speeches
@@ -22,10 +23,18 @@ class User < ActiveRecord::Base
     self.role == Constants::ADMIN
   end
 
+  def change_point_available(offset)
+    self.point_available += offset
+    halt 400 if self.point_available < 0
+  end
   def change_point(offset)
-    self.point += offset
-    if self.point < 0
-      self.point = 0
+    self.point_total += offset
+    if self.point_total < 0
+      self.point_total = 0
+    end
+    self.point_available += offset
+    if self.point_available < 0
+      self.point_available = 0
     end
   end
 

@@ -24,9 +24,6 @@ class App < Sinatra::Base
     body env['sinatra.error'].message
   end
 
-  def login_required!
-    halt 401 if @userid.nil?
-  end
   def admin_required!
     halt 401 unless @user.is_admin
   end
@@ -51,8 +48,6 @@ class App < Sinatra::Base
         @user.save!
       end
     end
-
-    login_required!
 
   end
   

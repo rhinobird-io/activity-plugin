@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150825093734) do
+ActiveRecord::Schema.define(version: 20150901073453) do
 
   create_table "attendances", force: :cascade do |t|
     t.integer  "user_id"
@@ -79,11 +79,13 @@ ActiveRecord::Schema.define(version: 20150825093734) do
 
   create_table "users", force: :cascade do |t|
     t.string   "role"
-    t.integer  "point"
+    t.integer  "point_available"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "point_total"
   end
 
-  add_index "users", ["point"], name: "index_users_on_point"
+  add_index "users", ["point_available"], name: "index_users_on_point_available"
+  add_index "users", ["point_total"], name: "index_users_on_point_total"
 
 end

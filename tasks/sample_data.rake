@@ -6,15 +6,19 @@ namespace :db do
   task :populate => :environment do
     Rake::Task['db:reset'].invoke
     ActiveRecord::Base.transaction do
+      p = Faker::Number.number(4)
       User.create!({
-                       point: Faker::Number.number(4),
+                       point_total: p,
+                       point_available: p,
                        role: Constants::ADMIN
                    })
       19.times do
+        p = Faker::Number.number(4)
         User.create!({
-           point: Faker::Number.number(4),
-           role: Constants::USER
-         })
+                         point_total: p,
+                         point_available: p,
+                         role: Constants::USER
+                     })
       end
 
       10.times do
