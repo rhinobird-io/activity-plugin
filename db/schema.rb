@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150901065340) do
+ActiveRecord::Schema.define(version: 20150901073453) do
 
   create_table "attendances", force: :cascade do |t|
     t.integer  "user_id"
@@ -86,5 +86,6 @@ ActiveRecord::Schema.define(version: 20150901065340) do
   end
 
   add_index "users", ["point_available"], name: "index_users_on_point_available"
+  add_index "users", ["point_total"], name: "index_users_on_point_total"
 
 end
