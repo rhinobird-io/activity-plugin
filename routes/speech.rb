@@ -123,11 +123,14 @@ class App < Sinatra::Base
   end
   # approved -> confirmed
   post '/speeches/:speech_id/agree' do
+    puts request.cookies
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
     if speech.status == Constants::APPROVED
       speech.status = Constants::CONFIRMED
       speech.save!
+
+      CalendarHelper::post_event(speech.title, speech.description, speech.time, speech.time)
       200
     else
       400
