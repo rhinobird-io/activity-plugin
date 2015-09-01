@@ -2,10 +2,10 @@ require 'pp'
 require 'rest_client'
 
 class CalendarHelper
+  @@calendar_url = ENV['CALENDAR_URL'] || 'http://rhinobird.workslan/platform/api/events'
   def self.post_event(cookies, title, description, from_time, to_time)
-    auth_url = ENV['AUTH_URL'] || 'http://rhinobird.workslan/platform/api/events'
     RestClient.post(
-        auth_url,
+        @@calendar_url,
         {
             'title': title,
             'description': description,
@@ -13,7 +13,8 @@ class CalendarHelper
             'from_time': from_time,
             'to_time': to_time,
             'participants': {teams: [], users: []},
-            'repeated': false
+            'repeated': false,
+            'secret_key': 'secret_key'
         }.to_json,
         {:cookies => cookies, :content_type => :json}
     )
@@ -25,6 +26,18 @@ class CalendarHelper
 
   end
   def self.delete_event
-
+    RestClient.post(
+        @@calendar_url,
+        {
+            'title': title,
+            'description': description,
+            'full_day': false,
+            'from_time': from_time,
+            'to_time': to_time,
+            'participants': {teams: [], users: []},
+            'repeated': false
+        }.to_json,
+        {:cookies => cookies, :content_type => :json}
+    )
   end
 end

@@ -10,6 +10,7 @@ class Speech < ActiveRecord::Base
   # closed: close by the speaker or admin
   validates :status, presence: true, inclusion: {in: [Constants::NEW, Constants::AUDITING, Constants::APPROVED, Constants::CONFIRMED, Constants::FINISHED, Constants::CLOSED], message: "%{value} is not a valid role"}
   validates :category, presence: true, inclusion: {in: [Constants::WEEKLY, Constants::MONTHLY], message: "%{value} is not a valid role"}
+  validates :event_id, :numericality => { :greater_than_or_equal_to => 1, :only_integer => true }, allow_nil: true
 
   belongs_to :speaker, :class_name => :User, :foreign_key => "user_id"
 

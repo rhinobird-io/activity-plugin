@@ -71,6 +71,7 @@ ActiveRecord::Schema.define(version: 20150901073453) do
     t.string   "category"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "event_id"
   end
 
   add_index "speeches", ["category"], name: "index_speeches_on_category"
