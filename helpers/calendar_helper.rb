@@ -1,12 +1,12 @@
 require 'rest_client'
 
 class CalendarHelper
-  @@calendar_url = ENV['CALENDAR_URL'] || 'http://rhinobird.workslan/platform/api/events'
-  @@secret_key = ENV['SECRET_KEY'] || 'secret_key'
+  CALENDAR_URL = ENV['CALENDAR_URL'] || 'http://localhost:8000/platform/api/events'
+  SECRET_KEY = ENV['SECRET_KEY']
 
-  def self.post_event(cookies, title, description, from_time, to_time, user_id)
+  def self.post_event(cookies, x_user, title, description, from_time, to_time, user_id)
     RestClient.post(
-        @@calendar_url,
+        CALENDAR_URL,
         {
             'title': title,
             'description': description,
@@ -16,19 +16,27 @@ class CalendarHelper
             'participants': {teams: [], users: [user_id]},
             'repeated': false
         }.to_json,
-        {:cookies => cookies, :content_type => :json, :secret_key => @@secret_key}
+        {:cookies => cookies, :content_type => :json, :secret_key => SECRET_KEY, :x_user => x_user}
     )
   end
-  def self.apply(cookies, event_id, user_id)
-
+  def self.apply(cookies, x_user, event_id, user_id)
+    RestClient.put(
+        CALENDAR_URL + "/" + event_id.to_s + "/register/" + user_id.to_s,
+        {},
+        {:cookies => cookies, :content_type => :json, :secret_key => SECRET_KEY, :x_user => x_user}
+    )
   end
-  def self.withdraw_apply(cookies, event_id, user_id)
-
+  def self.withdraw_apply(cookies, x_user, event_id, user_id)
+    RestClient.put(
+        CALENDAR_URL + "/" + event_id.to_s + "/unregister/" + user_id.to_s,
+        {},
+        {:cookies => cookies, :content_type => :json, :secret_key => SECRET_KEY, :x_user => x_user}
+    )
   end
-  def self.delete_event(cookies, event_id)
+  def self.delete_event(cookies, x_user, event_id)
     RestClient.delete(
-        @@calendar_url + '/' + event_id.to_s,
-        {:cookies => cookies, :content_type => :json, :secret_key => @@secret_key}
+        CALENDAR_URL + '/' + event_id.to_s,
+        {:cookies => cookies, :content_type => :json, :secret_key => SECRET_KEY, :x_user => x_user}
     )
   end
 end

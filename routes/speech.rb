@@ -129,7 +129,7 @@ class App < Sinatra::Base
     if speech.status == Constants::APPROVED
       ActiveRecord::Base.transaction do
         speech.status = Constants::CONFIRMED
-        event = CalendarHelper::post_event(request.cookies, speech.title, speech.description, speech.time, speech.time, @userid)
+        event = CalendarHelper::post_event(request.cookies, @userid, speech.title, speech.description, speech.time, speech.time, @userid)
         speech.event_id = JSON.parse(event)['id']
         speech.save!
       end
@@ -156,7 +156,7 @@ class App < Sinatra::Base
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::CONFIRMED
       ActiveRecord::Base.transaction do
-        CalendarHelper::delete_event(request.cookies, speech.event_id)
+        CalendarHelper::delete_event(request.cookies, @userid, speech.event_id)
         speech.status = Constants::CLOSED
         speech.save!
       end
@@ -184,15 +184,29 @@ class App < Sinatra::Base
 
   # user apply to be an audience
   post '/speeches/:speech_id/audiences' do
-    audience = AudienceRegistration.new(user_id: @userid, speech_id: params[:speech_id])
-    audience.save!
-    audience.to_json
+    unless AudienceRegistration.exists?(user_id: @userid, speech_id: params[:speech_id])
+      speech = Speech.find(params[:speech_id])
+      ActiveRecord::Base.transaction do
+        CalendarHelper::apply(request.cookies, @userid, speech.event_id, @userid)
+        audience = AudienceRegistration.new(user_id: @userid, speech_id: params[:speech_id])
+        audience.save!
+      end
+    end
+    200
+
   end
 
   # user withdraw his apply to be an audience
   delete '/speeches/:speech_id/audiences/:user_id' do
     self_required! params[:user_id].to_i
-    AudienceRegistration.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
+    registration = AudienceRegistration.where(user_id: params[:user_id], speech_id: params[:speech_id])
+    unless registration.empty?
+      speech = Speech.find(params[:speech_id])
+      ActiveRecord::Base.transaction do
+        AudienceRegistration.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
+        CalendarHelper::withdraw_apply(request.cookies, @userid, speech.event_id, @userid)
+      end
+    end
     200
   end
 
