@@ -1,7 +1,5 @@
 require 'sinatra/base'
 require 'sinatra/activerecord'
-require 'sinatra/cookies'
-
 
 class App < Sinatra::Base
   set :show_exceptions, :after_handler
