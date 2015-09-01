@@ -127,10 +127,11 @@ class App < Sinatra::Base
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
     if speech.status == Constants::APPROVED
-      speech.status = Constants::CONFIRMED
-      speech.save!
-
-      CalendarHelper::post_event(speech.title, speech.description, speech.time, speech.time)
+      ActiveRecord::Base.transaction do
+        speech.status = Constants::CONFIRMED
+        speech.save!
+        CalendarHelper::post_event(request.cookies, speech.title, speech.description, speech.time, speech.time)
+      end
       200
     else
       400
