@@ -1,5 +1,5 @@
 class User < ActiveRecord::Base
-  validates :role, presence: true, inclusion: {in: [Constants::USER, Constants::ADMIN], message: "%{value} is not a valid role"}
+  validates :role, presence: true, inclusion: {in: [Constants::USER_ROLE::USER, Constants::USER_ROLE::ADMIN], message: "%{value} is not a valid role"}
   validates :point_available, presence: true, :numericality => { :greater_than_or_equal_to => 0, :only_integer => true }
   validates :point_total, presence: true, :numericality => { :greater_than_or_equal_to => 0, :only_integer => true }
 
@@ -20,7 +20,7 @@ class User < ActiveRecord::Base
   has_many :prizes, :through => :exchanges
 
   def is_admin
-    self.role == Constants::ADMIN
+    self.role == Constants::USER_ROLE::ADMIN
   end
 
   def change_point_available(offset)
