@@ -53,6 +53,7 @@ class App < Sinatra::Base
     self_required! speech.user_id
     if speech.status == Constants::SPEECH_STATUS::NEW
       speech.destroy!
+      content_type 'text/plain'
       200
     else
       400
@@ -66,6 +67,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
       speech.resource_url = @body['resource_url']
       speech.save!
+      content_type 'text/plain'
       200
     else
       400
@@ -79,6 +81,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::NEW
       speech.status = Constants::SPEECH_STATUS::AUDITING
       speech.save!
+      content_type 'text/plain'
       200
     else
       400
@@ -91,6 +94,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::AUDITING || speech.status == Constants::SPEECH_STATUS::APPROVED
       speech.status = Constants::SPEECH_STATUS::NEW
       speech.save!
+      content_type 'text/plain'
       200
     else
       400
@@ -104,6 +108,7 @@ class App < Sinatra::Base
       speech.status = Constants::SPEECH_STATUS::APPROVED
       speech.time = @body['time']
       speech.save!
+      content_type 'text/plain'
       200
     else
       400
@@ -116,6 +121,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::AUDITING
       speech.status = Constants::SPEECH_STATUS::NEW
       speech.save!
+      content_type 'text/plain'
       200
     else
       400
@@ -133,6 +139,7 @@ class App < Sinatra::Base
         speech.event_id = JSON.parse(event)['id']
         speech.save!
       end
+      content_type 'text/plain'
       200
     else
       400
@@ -145,6 +152,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::APPROVED
       speech.status = Constants::SPEECH_STATUS::AUDITING
       speech.save!
+      content_type 'text/plain'
       200
     else
       400
@@ -160,6 +168,7 @@ class App < Sinatra::Base
         speech.status = Constants::SPEECH_STATUS::CLOSED
         speech.save!
       end
+      content_type 'text/plain'
       200
     else
       400
@@ -172,6 +181,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
       speech.status = Constants::SPEECH_STATUS::FINISHED
       speech.save!
+      content_type 'text/plain'
       200
     else
       400
@@ -192,6 +202,7 @@ class App < Sinatra::Base
         audience.save!
       end
     end
+    content_type 'text/plain'
     200
 
   end
@@ -207,6 +218,7 @@ class App < Sinatra::Base
         CalendarHelper::withdraw_apply(request.cookies, @userid, speech.event_id, @userid)
       end
     end
+    content_type 'text/plain'
     200
   end
 
@@ -227,6 +239,7 @@ class App < Sinatra::Base
         user.save!
       end
     end
+    content_type 'text/plain'
     200
   end
 
@@ -243,6 +256,7 @@ class App < Sinatra::Base
         Attendance.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
       end
     end
+    content_type 'text/plain'
     200
   end
 
