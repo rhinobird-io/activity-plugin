@@ -23,7 +23,7 @@ class App < Sinatra::Base
   # otherwise, return confirmed and finished speeches
   get '/users/:user_id/speeches' do
     if @userid == params[:user_id].to_i
-      User.find(params[:user_id]).speeches.to_json
+      User.find(params[:user_id]).speeches.order(id: :desc).to_json
     else
       User.find(params[:user_id]).speeches.where(status: [Constants::SPEECH_STATUS::CONFIRMED, Constants::SPEECH_STATUS::FINISHED]).to_json
     end
