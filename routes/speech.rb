@@ -81,8 +81,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::NEW
       speech.status = Constants::SPEECH_STATUS::AUDITING
       speech.save!
-      content_type 'text/plain'
-      200
+      speech.to_json
     else
       400
     end
@@ -94,8 +93,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::AUDITING || speech.status == Constants::SPEECH_STATUS::APPROVED
       speech.status = Constants::SPEECH_STATUS::NEW
       speech.save!
-      content_type 'text/plain'
-      200
+      speech.to_json
     else
       400
     end
@@ -108,8 +106,7 @@ class App < Sinatra::Base
       speech.status = Constants::SPEECH_STATUS::APPROVED
       speech.time = @body['time']
       speech.save!
-      content_type 'text/plain'
-      200
+      speech.to_json
     else
       400
     end
@@ -121,8 +118,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::AUDITING
       speech.status = Constants::SPEECH_STATUS::NEW
       speech.save!
-      content_type 'text/plain'
-      200
+      speech.to_json
     else
       400
     end
@@ -139,8 +135,7 @@ class App < Sinatra::Base
         speech.event_id = JSON.parse(event)['id']
         speech.save!
       end
-      content_type 'text/plain'
-      200
+      speech.to_json
     else
       400
     end
@@ -152,8 +147,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::APPROVED
       speech.status = Constants::SPEECH_STATUS::AUDITING
       speech.save!
-      content_type 'text/plain'
-      200
+      speech.to_json
     else
       400
     end
@@ -168,8 +162,7 @@ class App < Sinatra::Base
         speech.status = Constants::SPEECH_STATUS::CLOSED
         speech.save!
       end
-      content_type 'text/plain'
-      200
+      speech.to_json
     else
       400
     end
@@ -181,8 +174,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
       speech.status = Constants::SPEECH_STATUS::FINISHED
       speech.save!
-      content_type 'text/plain'
-      200
+      speech.to_json
     else
       400
     end
@@ -194,32 +186,31 @@ class App < Sinatra::Base
 
   # user apply to be an audience
   post '/speeches/:speech_id/audiences' do
+    speech = Speech.find(params[:speech_id])
+    halt 400 if speech.status != Constants::SPEECH_STATUS::CONFIRMED
     unless AudienceRegistration.exists?(user_id: @userid, speech_id: params[:speech_id])
-      speech = Speech.find(params[:speech_id])
       ActiveRecord::Base.transaction do
         CalendarHelper::apply(request.cookies, @userid, speech.event_id, @userid)
         audience = AudienceRegistration.new(user_id: @userid, speech_id: params[:speech_id])
         audience.save!
       end
     end
-    content_type 'text/plain'
-    200
-
+    speech.to_json(include: :audiences)
   end
 
   # user withdraw his apply to be an audience
   delete '/speeches/:speech_id/audiences/:user_id' do
     self_required! params[:user_id].to_i
+    speech = Speech.find(params[:speech_id])
+    halt 400 if speech.status != Constants::SPEECH_STATUS::CONFIRMED
     registration = AudienceRegistration.where(user_id: params[:user_id], speech_id: params[:speech_id])
     unless registration.empty?
-      speech = Speech.find(params[:speech_id])
       ActiveRecord::Base.transaction do
         AudienceRegistration.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
         CalendarHelper::withdraw_apply(request.cookies, @userid, speech.event_id, @userid)
       end
     end
-    content_type 'text/plain'
-    200
+    speech.to_json(include: :audiences)
   end
 
   get '/speeches/:speech_id/participants' do

@@ -20,6 +20,7 @@ class CalendarHelper
     )
   end
   def self.apply(cookies, x_user, event_id, user_id)
+    puts CALENDAR_URL + "/" + event_id.to_s + "/register/" + user_id.to_s
     RestClient.put(
         CALENDAR_URL + "/" + event_id.to_s + "/register/" + user_id.to_s,
         {},
