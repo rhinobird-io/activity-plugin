@@ -66,9 +66,9 @@ class App < Sinatra::Base
     self_required! speech.user_id
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
       speech.resource_url = @body['resource_url']
+      speech.resource_name = @body['resource_name']
       speech.save!
-      content_type 'text/plain'
-      200
+      speech.to_json(include: :audiences)
     else
       400
     end
@@ -174,7 +174,7 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
       speech.status = Constants::SPEECH_STATUS::FINISHED
       speech.save!
-      speech.to_json
+      speech.to_json(include: :participants)
     else
       400
     end
