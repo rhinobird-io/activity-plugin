@@ -172,9 +172,23 @@ class App < Sinatra::Base
     admin_required!
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
-      speech.status = Constants::SPEECH_STATUS::FINISHED
-      speech.save!
-      speech.to_json(include: :participants)
+      participants = @body['participants']
+
+      ActiveRecord::Base.transaction do
+        participants.each{|u|
+          unless Attendance.exists?(user_id: u['user_id'], speech_id: params[:speech_id])
+              attendance = Attendance.new(user_id: u['user_id'], speech_id: params[:speech_id],
+                                          role: u['role'], point: u['point'], commented: u['commented'])
+              attendance.save!
+              user = User.find(u['user_id'])
+              user.change_point(u['point'] + (u['commented'] ? 1 : 0))
+              user.save!
+          end
+        }
+        speech.status = Constants::SPEECH_STATUS::FINISHED
+        speech.save!
+        speech.to_json(include: :participants)
+      end
     else
       400
     end
