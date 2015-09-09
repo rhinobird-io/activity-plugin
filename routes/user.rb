@@ -25,18 +25,18 @@ class App < Sinatra::Base
     if @userid == params[:user_id].to_i
       User.find(params[:user_id]).speeches.order(id: :desc).to_json
     else
-      User.find(params[:user_id]).speeches.where(status: [Constants::SPEECH_STATUS::CONFIRMED, Constants::SPEECH_STATUS::FINISHED]).to_json
+      User.find(params[:user_id]).speeches.where(status: [Constants::SPEECH_STATUS::CONFIRMED, Constants::SPEECH_STATUS::FINISHED]).order(id: :desc).to_json
     end
   end
 
   # retrieve speeches this user have applied as an audience
   get '/users/:user_id/applied_speeches' do
-    User.find(params[:user_id]).applied_speeches.to_json
+    User.find(params[:user_id]).applied_speeches.order(time: :desc).to_json
   end
 
   # retrieve speeches this user have attended
   get '/users/:user_id/attended_speeches' do
-    User.find(params[:user_id]).attended_speeches.to_json
+    User.find(params[:user_id]).attended_speeches.order(time: :desc).to_json
   end
 
   # retrieve exchange history, including prize information
