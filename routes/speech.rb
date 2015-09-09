@@ -162,7 +162,7 @@ class App < Sinatra::Base
         speech.status = Constants::SPEECH_STATUS::CLOSED
         speech.save!
       end
-      speech.to_json
+      speech.to_json(include: :audiences)
     else
       400
     end
