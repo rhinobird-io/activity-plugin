@@ -176,13 +176,22 @@ class App < Sinatra::Base
 
       ActiveRecord::Base.transaction do
         participants.each{|u|
+          not_add_point = true
+          user = User.find_by_id(u['user_id'])
+          if user.nil?
+            user = User.new(id: u['user_id'], role: Constants::USER_ROLE::USER, point_total: 0, point_available: 0)
+            user.change_point(u['point'] + (u['commented'] ? 1 : 0))
+            user.save!
+            not_add_point = false
+          end
           unless Attendance.exists?(user_id: u['user_id'], speech_id: params[:speech_id])
               attendance = Attendance.new(user_id: u['user_id'], speech_id: params[:speech_id],
                                           role: u['role'], point: u['point'], commented: u['commented'])
               attendance.save!
-              user = User.find(u['user_id'])
-              user.change_point(u['point'] + (u['commented'] ? 1 : 0))
-              user.save!
+              if not_add_point
+                user.change_point(u['point'] + (u['commented'] ? 1 : 0))
+                user.save!
+              end
           end
         }
         speech.status = Constants::SPEECH_STATUS::FINISHED
