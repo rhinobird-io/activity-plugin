@@ -2,7 +2,7 @@ require 'rest_client'
 
 class CalendarHelper
   CALENDAR_URL = ENV['CALENDAR_URL'] || 'http://localhost:8000/platform/api/events'
-  SECRET_KEY = ENV['SECRET_KEY']
+  SECRET_KEY = ENV['SECRET_KEY'] || 'secret_key'
 
   def self.post_event(cookies, x_user, title, description, from_time, to_time, user_id)
     RestClient.post(

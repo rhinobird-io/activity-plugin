@@ -5,6 +5,10 @@ class App < Sinatra::Base
     User.all.to_json
   end
 
+  post '/users/admins' do
+    User.where(role: Constants::USER_ROLE::ADMIN).to_json
+  end
+
   # user rank sorted by total point
   # retrieve ten users by default
   # you can use a query parameter 'limit' to retrieve a specific amount of user
