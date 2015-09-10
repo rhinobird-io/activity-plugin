@@ -61,12 +61,38 @@ class App < Sinatra::Base
   end
 
   # upload resource to the speech
-  post '/speeches/:speech_id/upload' do
+  post '/speeches/:speech_id/attachments' do
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
-      speech.resource_url = @body['resource_url']
-      speech.resource_name = @body['resource_name']
+      url = speech.resource_url || ""
+      url = '/' + url unless url.empty?
+      speech.resource_url = @body['resource_url'] + url
+
+      name = speech.resource_name || ""
+      name = '/' + name unless name.empty?
+      speech.resource_name = @body['resource_name'] + name
+
+      speech.save!
+      speech.to_json(include: :audiences)
+    else
+      400
+    end
+  end
+
+  delete '/speeches/:speech_id/attachments/:file_id' do
+    speech = Speech.find(params[:speech_id])
+    self_required! speech.user_id
+    if speech.status == Constants::SPEECH_STATUS::CONFIRMED
+      urls = speech.resource_url.split('/')
+      names = speech.resource_name.split('/')
+      pos = urls.index(params[:file_id])
+      if pos
+        urls.delete_at(pos)
+        names.delete_at(pos)
+      end
+      speech.resource_url = urls.join('/')
+      speech.resource_name = names.join('/')
       speech.save!
       speech.to_json(include: :audiences)
     else
