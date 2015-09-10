@@ -9,6 +9,7 @@ gem 'sinatra-activerecord'
 gem 'pg'
 gem 'rake'
 gem 'faker'
+gem 'rest-client'
 
 group :development do
   gem 'sqlite3'

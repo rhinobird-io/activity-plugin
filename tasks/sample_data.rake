@@ -9,102 +9,44 @@ namespace :db do
       p = Faker::Number.number(4)
       User.create!({
                        point_total: p,
-                       point_available: p,
-                       role: Constants::ADMIN
+                       point_available: Faker::Number.between(1, p.to_i),
+                       role: Constants::USER_ROLE::ADMIN
                    })
       19.times do
         p = Faker::Number.number(4)
         User.create!({
                          point_total: p,
-                         point_available: p,
-                         role: Constants::USER
+                         point_available: Faker::Number.between(1, p.to_i),
+                         role: Constants::USER_ROLE::USER
                      })
       end
+      Constants::SPEECH_STATUS.constants.each do |status|
+        10.times do
+          Speech.create!({
+                             title: Faker::Lorem.sentence,
+                             description: Faker::Lorem.paragraph,
+                             resource_url: '',
+                             user_id: 16,#Faker::Number.between(1, 20),
+                             status: Constants::SPEECH_STATUS.const_get(status),
+                             category: Faker::Number.between(0, 1) == 0 ? Constants::SPEECH_CATEGORY::WEEKLY : Constants::SPEECH_CATEGORY::MONTHLY,
+                             time: Faker::Time.between(1.months.ago, 3.months.from_now),
+                             expected_duration: Faker::Number.between(10, 180)
+                         })
+        end
+      end
 
-      10.times do
-        Speech.create!({
-             title: Faker::Lorem.sentence,
-             description: Faker::Lorem.paragraph,
-             resource_url: '',
-             user_id: Faker::Number.between(1, 20),
-             status: Constants::NEW,
-             category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
-             time: nil,
-             expected_duration: Faker::Number.between(10, 180)
-         })
-      end
-      10.times do
-        Speech.create!({
-                           title: Faker::Lorem.sentence,
-                           description: Faker::Lorem.paragraph,
-                           resource_url: '',
-                           user_id: Faker::Number.between(1, 20),
-                           status: Constants::AUDITING,
-                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
-                           time: nil,
-                           expected_duration: Faker::Number.between(10, 180)
-                       })
-      end
-      10.times do
-        Speech.create!({
-                           title: Faker::Lorem.sentence,
-                           description: Faker::Lorem.paragraph,
-                           resource_url: '',
-                           user_id: Faker::Number.between(1, 20),
-                           status: Constants::APPROVED,
-                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
-                           time: Faker::Time.forward(100),
-                           expected_duration: Faker::Number.between(10, 180)
-                       })
-      end
-      10.times do
-        Speech.create!({
-                           title: Faker::Lorem.sentence,
-                           description: Faker::Lorem.paragraph,
-                           resource_url: '',
-                           user_id: Faker::Number.between(1, 20),
-                           status: Constants::CONFIRMED,
-                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
-                           time: Faker::Time.forward(100),
-                           expected_duration: Faker::Number.between(10, 180)
-                       })
-      end
-      10.times do
-        Speech.create!({
-                           title: Faker::Lorem.sentence,
-                           description: Faker::Lorem.paragraph,
-                           resource_url: '',
-                           user_id: Faker::Number.between(1, 20),
-                           status: Constants::FINISHED,
-                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
-                           time: Faker::Time.forward(100),
-                           expected_duration: Faker::Number.between(10, 180)
-                       })
-      end
-      10.times do
-        Speech.create!({
-                           title: Faker::Lorem.sentence,
-                           description: Faker::Lorem.paragraph,
-                           resource_url: '',
-                           user_id: Faker::Number.between(1, 20),
-                           status: Constants::CLOSED,
-                           category: Faker::Number.between(0, 1) == 0 ? Constants::WEEKLY : Constants::MONTHLY,
-                           time: Faker::Time.forward(100),
-                           expected_duration: Faker::Number.between(10, 180)
-                       })
-      end
 
       20.times do
         AudienceRegistration.create!({
-                             user_id: Faker::Number.between(1, 20),
+                             user_id: 16,#Faker::Number.between(1, 20),
                              speech_id: Faker::Number.between(1, 60)
                          })
       end
       20.times do
         Attendance.create!({
-                             user_id: Faker::Number.between(1, 20),
+                             user_id: 16,#Faker::Number.between(1, 20),
                              speech_id: Faker::Number.between(1, 60),
-                             role: Faker::Number.between(0, 10) == 10 ? Constants::SPEAKER : Constants::AUDIENCE,
+                             role: Faker::Number.between(0, 10) == 10 ? Constants::ATTENDANCE_ROLE::SPEAKER : Constants::ATTENDANCE_ROLE::AUDIENCE,
                              point: Faker::Number.between(1, 50),
                              commented: false
                          })

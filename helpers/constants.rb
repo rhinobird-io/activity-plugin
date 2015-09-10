@@ -1,24 +1,32 @@
-class Constants
+module Constants
   # new: newly created, draft.
   # auditing: speaker submits and waits for auditing.
   # approved: admin approves and arranges time for it
   # confirmed: speaker agrees the arrangement
   # finish: the speech is finished.
   # closed: close by the speaker or admin
-  NEW = "new"
-  AUDITING = "auditing"
-  APPROVED = "approved"
-  CONFIRMED = "confirmed"
-  FINISHED = "finished"
-  CLOSED = "closed"
+  module SPEECH_STATUS
+    NEW = "new"
+    AUDITING = "auditing"
+    APPROVED = "approved"
+    CONFIRMED = "confirmed"
+    FINISHED = "finished"
+    CLOSED = "closed"
+  end
 
-  WEEKLY = "weekly"
-  MONTHLY = "monthly"
+  module SPEECH_CATEGORY
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+  end
 
-  USER = "user"
-  ADMIN = "admin"
+  module USER_ROLE
+    USER = "user"
+    ADMIN = "admin"
+  end
 
-  SPEAKER = "speaker"
-  AUDIENCE = "audience"
+  module ATTENDANCE_ROLE
+    SPEAKER = "speaker"
+    AUDIENCE = "audience"
+  end
 
 end

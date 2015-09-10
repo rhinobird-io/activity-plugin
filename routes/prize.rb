@@ -35,6 +35,7 @@ class App < Sinatra::Base
   delete '/prizes/:prize_id' do
     admin_required!
     Prize.find(params[:prize_id]).destroy!
+    content_type 'text/plain'
     200
   end
 
@@ -55,6 +56,7 @@ class App < Sinatra::Base
                           point: prize.price, exchange_time: Time.now)
         exchange.save!
       end
+      content_type 'text/plain'
       200
     end
   end

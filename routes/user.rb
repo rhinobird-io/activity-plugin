@@ -5,6 +5,10 @@ class App < Sinatra::Base
     User.all.to_json
   end
 
+  post '/users/admins' do
+    User.where(role: Constants::USER_ROLE::ADMIN).to_json
+  end
+
   # user rank sorted by total point
   # retrieve ten users by default
   # you can use a query parameter 'limit' to retrieve a specific amount of user
@@ -23,20 +27,20 @@ class App < Sinatra::Base
   # otherwise, return confirmed and finished speeches
   get '/users/:user_id/speeches' do
     if @userid == params[:user_id].to_i
-      User.find(params[:user_id]).speeches.to_json
+      User.find(params[:user_id]).speeches.order(id: :desc).to_json
     else
-      User.find(params[:user_id]).speeches.where(status: [Constants::CONFIRMED, Constants::FINISHED]).to_json
+      User.find(params[:user_id]).speeches.where(status: [Constants::SPEECH_STATUS::CONFIRMED, Constants::SPEECH_STATUS::FINISHED]).order(id: :desc).to_json
     end
   end
 
   # retrieve speeches this user have applied as an audience
   get '/users/:user_id/applied_speeches' do
-    User.find(params[:user_id]).applied_speeches.to_json
+    User.find(params[:user_id]).applied_speeches.order(time: :desc).to_json
   end
 
   # retrieve speeches this user have attended
   get '/users/:user_id/attended_speeches' do
-    User.find(params[:user_id]).attended_speeches.to_json
+    User.find(params[:user_id]).attended_speeches.where.not(user_id: params[:user_id]).order(time: :desc).to_json
   end
 
   # retrieve exchange history, including prize information

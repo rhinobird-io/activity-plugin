@@ -1,7 +1,6 @@
 require 'sinatra/base'
 require 'sinatra/activerecord'
 
-
 class App < Sinatra::Base
   set :show_exceptions, :after_handler
   error ActiveRecord::RecordInvalid do
