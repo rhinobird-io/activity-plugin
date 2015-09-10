@@ -14,7 +14,7 @@ class App < Sinatra::Base
   get '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::SPEECH_STATUS::FINISHED
-      speech.to_json(include: :participants)
+      speech.to_json(include: :attendances)
     else
       speech.to_json(include: :audiences)
     end
@@ -196,7 +196,7 @@ class App < Sinatra::Base
         }
         speech.status = Constants::SPEECH_STATUS::FINISHED
         speech.save!
-        speech.to_json(include: :participants)
+        speech.to_json(include: :attendances)
       end
     else
       400
