@@ -40,7 +40,7 @@ class App < Sinatra::Base
 
   # retrieve speeches this user have attended
   get '/users/:user_id/attended_speeches' do
-    User.find(params[:user_id]).attended_speeches.order(time: :desc).to_json
+    User.find(params[:user_id]).attended_speeches.where.not(user_id: params[:user_id]).order(time: :desc).to_json
   end
 
   # retrieve exchange history, including prize information
