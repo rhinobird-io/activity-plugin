@@ -2,17 +2,23 @@ class App < Sinatra::Base
 
   # retrieve speeches sorted by time in desc order
   # retrieve confirmed and finished speeches by default
-  # you can use a query parameter 'status' to retrieve speeches in other status
+  # admins can use a query parameter 'status' to retrieve speeches in other status
   # use comma to separate each status
   # /speeches?status=auditing,confirmed
   get '/speeches' do
-    status = params[:status] || Constants::SPEECH_STATUS::CONFIRMED + ',' + Constants::SPEECH_STATUS::FINISHED
+    status = Constants::SPEECH_STATUS::CONFIRMED + ',' + Constants::SPEECH_STATUS::FINISHED
+    if @user.is_admin && params[:status]
+      status = params[:status]
+    end
     Speech.where(status: status.gsub(/\s+/, '').split(',')).order(time: :desc).to_json
   end
 
   # retrieve a speech, including applied audiences (not finished) or participants (finished)
   get '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
+    if speech.user_id != @userid && !(@user.is_admin) && speech.status != Constants::SPEECH_STATUS::CONFIRMED && speech.status != Constants::SPEECH_STATUS::FINISHED
+      halt 404
+    end
     if speech.status == Constants::SPEECH_STATUS::FINISHED
       speech.to_json(include: :attendances)
     else
