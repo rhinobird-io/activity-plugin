@@ -243,7 +243,7 @@ class App < Sinatra::Base
   post '/speeches/:speech_id/audiences' do
     speech = Speech.find(params[:speech_id])
     halt 400 if speech.status != Constants::SPEECH_STATUS::CONFIRMED
-    unless AudienceRegistration.exists?(user_id: @userid, speech_id: params[:speech_id])
+    if !(AudienceRegistration.exists?(user_id: @userid, speech_id: params[:speech_id])) && speech.user_id != @userid
       ActiveRecord::Base.transaction do
         CalendarHelper::apply(request.cookies, @userid, speech.event_id, @userid)
         audience = AudienceRegistration.new(user_id: @userid, speech_id: params[:speech_id])
