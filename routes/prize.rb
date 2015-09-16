@@ -1,7 +1,9 @@
 class App < Sinatra::Base
 
   get '/prizes' do
-    Prize.all.order(created_at: :desc).to_json
+    column = params[:column] == 'price' ? 'price' : 'exchanged_times'
+    order = params[:order] == 'asc' ? 'asc' : 'desc'
+    Prize.all.order(column + ' ' + order).to_json
   end
 
   get '/prizes/:prize_id' do

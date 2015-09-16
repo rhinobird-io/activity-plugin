@@ -56,7 +56,8 @@ namespace :db do
                           name: Faker::Lorem.word,
                           description: Faker::Lorem.paragraph,
                           price: Faker::Number.number(3),
-                          picture_url: Faker::Avatar.image
+                          picture_url: Faker::Avatar.image,
+                          exchanged_times: Faker::Number.number(3)
                       })
       end
       20.times do
