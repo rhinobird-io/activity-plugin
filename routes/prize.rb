@@ -18,7 +18,7 @@ class App < Sinatra::Base
   post '/prizes' do
     admin_required!
     prize = Prize.new(name: @body['name'], description: @body['description'],
-                        picture_url: @body['picture_url'], price: @body['price'])
+                        picture_url: @body['picture_url'], price: @body['price'], exchanged_times: 0)
     prize.save!
     prize.to_json
   end
@@ -52,16 +52,17 @@ class App < Sinatra::Base
       body 'The available point of this user is not enough to exchange this prize.'
     else
       ActiveRecord::Base.transaction do
+        prize = Prize.find(@body['prize_id'])
+        prize.lock!
         @user.change_point_available(- prize.price)
         @user.save!
         exchange = Exchange.new(user_id: @userid, prize_id: @body['prize_id'],
                           point: prize.price, exchange_time: Time.now)
         exchange.save!
+        prize.increment(:exchanged_times, 1)
+        prize.save!
       end
-      content_type 'text/plain'
-      200
+      prize.to_json
     end
   end
-
-
 end
