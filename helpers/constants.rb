@@ -29,4 +29,8 @@ module Constants
     AUDIENCE = "audience"
   end
 
+  module EXCHANGE_STATUS
+    NEW = 0
+    SENT = 1
+  end
 end

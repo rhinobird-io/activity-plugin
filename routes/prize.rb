@@ -57,12 +57,24 @@ class App < Sinatra::Base
         @user.change_point_available(- prize.price)
         @user.save!
         exchange = Exchange.new(user_id: @userid, prize_id: @body['prize_id'],
-                          point: prize.price, exchange_time: Time.now)
+                          point: prize.price, exchange_time: Time.now, status: Constants::EXCHANGE_STATUS::NEW)
         exchange.save!
         prize.increment(:exchanged_times, 1)
         prize.save!
       end
       prize.to_json
+    end
+  end
+
+  post '/exchanges/:id/sent' do
+    admin_required!
+    exchange = Exchange.find(params[:id])
+    if exchange.status == Constants::EXCHANGE_STATUS::NEW
+      exchange.status = Constants::EXCHANGE_STATUS::SENT
+      exchange.save!
+      exchange.to_json(include: :prize)
+    else
+      400
     end
   end
 end

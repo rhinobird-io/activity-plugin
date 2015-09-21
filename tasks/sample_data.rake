@@ -65,7 +65,8 @@ namespace :db do
                              prize_id: Faker::Number.between(1, 20),
                              user_id: Faker::Number.between(1, 20),
                              point: Faker::Number.number(3),
-                             exchange_time: Faker::Time.backward(30)
+                             exchange_time: Faker::Time.backward(30),
+                             status: Constants::EXCHANGE_STATUS::NEW
                          })
       end
     end
