@@ -48,7 +48,7 @@ class User < ActiveRecord::Base
         id: "exchange_" + exchange.id.to_s,
         prizeId: exchange.prize_id,
         time: exchange.exchange_time,
-        title: exchange.prize.description,
+        title: exchange.prize.name,
         category: "exchange",
         point: exchange.point
         })
