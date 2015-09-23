@@ -65,7 +65,7 @@ class User < ActiveRecord::Base
         })
     end
 
-    return points_history
+    points_history.sort! { |a, b| b[:time] <=> a[:time] }
   end
 
   def as_json(options={})

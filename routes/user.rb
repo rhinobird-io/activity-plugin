@@ -51,9 +51,7 @@ class App < Sinatra::Base
   # retrieve points history, including gained points history and exchanged points history
   get '/users/:user_id/points_history' do
     user = User.find(params[:user_id])
-    points_history = user.load_point_history()
-
-    points_history.sort! { |a, b| b[:time] <=> a[:time] }.to_json()
+    user.load_point_history().to_json()
   end
 
 
