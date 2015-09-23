@@ -42,7 +42,12 @@ class App < Sinatra::Base
   end
 
   get '/exchanges' do
-    Exchange.all.order(exchange_time: :desc).to_json(include: :prize)
+    before = params[:before]
+    if before.nil?
+      Exchange.all.order(exchange_time: :desc).limit(20).to_json(include: :prize)
+    else
+      Exchange.where('id < ?', before).order(exchange_time: :desc).limit(20).to_json(include: :prize)
+    end
   end
 
   post '/exchanges' do
