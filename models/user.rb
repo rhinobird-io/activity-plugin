@@ -46,6 +46,7 @@ class User < ActiveRecord::Base
     exchanges.each do |exchange|
       points_history.push({
         id: "exchange_" + exchange.id.to_s,
+        prizeId: exchange.prize_id,
         time: exchange.exchange_time,
         title: exchange.prize.description,
         category: "exchange",
@@ -56,6 +57,7 @@ class User < ActiveRecord::Base
     attendances.each do |attendance|
       points_history.push({
         id: "attendance_" + attendance.id.to_s,
+        speechId: attendance.speech_id,
         time: attendance.speech.time,
         title: attendance.speech.title,
         category: "gain",
