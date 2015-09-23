@@ -221,7 +221,7 @@ class App < Sinatra::Base
                                           role: u['role'], point: u['point'], commented: u['commented'])
               attendance.save!
               if not_add_point
-                user.change_point(u['point'] + (u['commented'] ? 1 : 0))
+                user.change_point(u['point'])
                 user.save!
               end
           end
@@ -281,7 +281,7 @@ class App < Sinatra::Base
                                     role: @body['role'], point: @body['point'], commented: @body['commented'])
         attendance.save!
         user = User.find(@body['user_id'])
-        user.change_point(@body['point'] + (@body['commented'] ? 1 : 0))
+        user.change_point(@body['point'])
         user.save!
       end
     end
@@ -296,7 +296,7 @@ class App < Sinatra::Base
     unless attendance.empty?
       ActiveRecord::Base.transaction do
         user = User.find(params[:user_id])
-        user.change_point(- attendance.take.point - (attendance.take.commented ? 1 : 0))
+        user.change_point(-attendance.take.point)
         user.save!
 
         Attendance.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])

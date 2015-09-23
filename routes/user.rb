@@ -48,5 +48,11 @@ class App < Sinatra::Base
     User.find(params[:user_id]).exchanges.to_json(include: :prize)
   end
 
+  # retrieve points history, including gained points history and exchanged points history
+  get '/users/:user_id/points_history' do
+    user = User.find(params[:user_id])
+    user.load_point_history().to_json()
+  end
+
 
 end

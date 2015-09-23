@@ -38,6 +38,36 @@ class User < ActiveRecord::Base
     end
   end
 
+  def load_point_history()
+    exchanges = self.exchanges.includes(:prize)
+    attendances = self.attendances.includes(:speech)
+
+    points_history = []
+    exchanges.each do |exchange|
+      points_history.push({
+        id: "exchange_" + exchange.id.to_s,
+        prizeId: exchange.prize_id,
+        time: exchange.exchange_time,
+        title: exchange.prize.description,
+        category: "exchange",
+        point: exchange.point
+        })
+    end
+
+    attendances.each do |attendance|
+      points_history.push({
+        id: "attendance_" + attendance.id.to_s,
+        speechId: attendance.speech_id,
+        time: attendance.speech.time,
+        title: attendance.speech.title,
+        category: "gain",
+        point: attendance.point
+        })
+    end
+
+    points_history.sort! { |a, b| b[:time] <=> a[:time] }
+  end
+
   def as_json(options={})
     options[:except] ||= [:created_at, :updated_at]
     super(options)
