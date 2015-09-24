@@ -212,7 +212,7 @@ class App < Sinatra::Base
           user = User.find_by_id(u['user_id'])
           if user.nil?
             user = User.new(id: u['user_id'], role: Constants::USER_ROLE::USER, point_total: 0, point_available: 0)
-            user.change_point(u['point'] + (u['commented'] ? 1 : 0))
+            user.change_point(u['point'])
             user.save!
             not_add_point = false
           end
