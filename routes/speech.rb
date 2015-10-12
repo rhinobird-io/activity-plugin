@@ -30,7 +30,8 @@ class App < Sinatra::Base
   post '/speeches' do
     speech = Speech.new(title: @body['title'], description: @body['description'],
                         user_id: @userid, expected_duration: @body['expected_duration'],
-                        status: Constants::SPEECH_STATUS::NEW, category: @body['category'])
+                        status: Constants::SPEECH_STATUS::AUDITING, category: @body['category'],
+                        comment: @body['comment'])
     speech.save!
     speech.to_json
   end
@@ -40,13 +41,14 @@ class App < Sinatra::Base
   put '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
-    if speech.status != Constants::SPEECH_STATUS::NEW
+    if speech.status != Constants::SPEECH_STATUS::AUDITING
       400
     else
       speech.title = @body['title']
       speech.description = @body['description']
       speech.expected_duration = @body['expected_duration']
       speech.category = @body['category']
+      speech.comment = @body['comment']
       speech.save!
       speech.to_json
     end
@@ -57,7 +59,7 @@ class App < Sinatra::Base
   delete '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
-    if speech.status == Constants::SPEECH_STATUS::NEW
+    if speech.status == Constants::SPEECH_STATUS::AUDITING
       speech.destroy!
       content_type 'text/plain'
       200
@@ -106,30 +108,6 @@ class App < Sinatra::Base
     end
   end
 
-  # new -> auditing
-  post '/speeches/:speech_id/submit' do
-    speech = Speech.find(params[:speech_id])
-    self_required! speech.user_id
-    if speech.status == Constants::SPEECH_STATUS::NEW
-      speech.status = Constants::SPEECH_STATUS::AUDITING
-      speech.save!
-      speech.to_json
-    else
-      400
-    end
-  end
-  # auditing || approved -> new, by speaker
-  post '/speeches/:speech_id/withdraw' do
-    speech = Speech.find(params[:speech_id])
-    self_required! speech.user_id
-    if speech.status == Constants::SPEECH_STATUS::AUDITING || speech.status == Constants::SPEECH_STATUS::APPROVED
-      speech.status = Constants::SPEECH_STATUS::NEW
-      speech.save!
-      speech.to_json
-    else
-      400
-    end
-  end
   # auditing -> approved
   post '/speeches/:speech_id/approve' do
     admin_required!
@@ -137,6 +115,9 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::AUDITING
       speech.status = Constants::SPEECH_STATUS::APPROVED
       speech.time = @body['time']
+      if @body['comment'] && @body['comment'].length > 0
+        speech.comment = @body['comment'] + '||' + speech.comment
+      end
       speech.save!
       speech.to_json
     else
@@ -147,8 +128,8 @@ class App < Sinatra::Base
   post '/speeches/:speech_id/reject' do
     admin_required!
     speech = Speech.find(params[:speech_id])
-    if speech.status == Constants::SPEECH_STATUS::AUDITING
-      speech.status = Constants::SPEECH_STATUS::NEW
+    if speech.status == Constants::SPEECH_STATUS::AUDITING && @body['comment'] && @body['comment'].length > 0
+      speech.comment = @body['comment'] + '||' + speech.comment
       speech.save!
       speech.to_json
     else
@@ -176,8 +157,9 @@ class App < Sinatra::Base
   post '/speeches/:speech_id/disagree' do
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
-    if speech.status == Constants::SPEECH_STATUS::APPROVED
+    if speech.status == Constants::SPEECH_STATUS::APPROVED && @body['comment'] && @body['comment'].length > 0
       speech.status = Constants::SPEECH_STATUS::AUDITING
+      speech.comment = @body['comment'] + '||' + speech.comment
       speech.save!
       speech.to_json
     else
