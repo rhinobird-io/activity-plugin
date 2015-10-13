@@ -243,10 +243,6 @@ class App < Sinatra::Base
     end
   end
 
-  get '/speeches/:speech_id/audiences' do
-    Speech.find(params[:speech_id]).audiences.to_json
-  end
-
   # user apply to be an audience
   post '/speeches/:speech_id/audiences' do
     speech = Speech.find(params[:speech_id])
@@ -276,43 +272,6 @@ class App < Sinatra::Base
     speech.to_json(include: [:audiences, :comments])
   end
 
-  get '/speeches/:speech_id/participants' do
-    Speech.find(params[:speech_id]).participants.to_json
-  end
-
-  # add a participant, add point to the user
-  post '/speeches/:speech_id/participants' do
-    admin_required!
-    unless Attendance.exists?(user_id: @body['user_id'], speech_id: params[:speech_id])
-      ActiveRecord::Base.transaction do
-        attendance = Attendance.new(user_id: @body['user_id'], speech_id: params[:speech_id],
-                                    role: @body['role'], point: @body['point'], commented: @body['commented'])
-        attendance.save!
-        user = User.find(@body['user_id'])
-        user.change_point(@body['point'])
-        user.save!
-      end
-    end
-    content_type 'text/plain'
-    200
-  end
-
-  # delete a participant, minus point from the user
-  delete '/speeches/:speech_id/participants/:user_id' do
-    admin_required!
-    attendance = Attendance.where(user_id: params[:user_id], speech_id: params[:speech_id])
-    unless attendance.empty?
-      ActiveRecord::Base.transaction do
-        user = User.find(params[:user_id])
-        user.change_point(-attendance.take.point)
-        user.save!
-
-        Attendance.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
-      end
-    end
-    content_type 'text/plain'
-    200
-  end
 
   # mark user likes a speech and add points to the speaker
   post '/speeches/:user_id/like/:speech_id' do
