@@ -20,19 +20,25 @@ class App < Sinatra::Base
       halt 404
     end
     if speech.status == Constants::SPEECH_STATUS::FINISHED
-      speech.to_json(include: :attendances)
+      speech.to_json(include: [:attendances, :comments])
     else
-      speech.to_json(include: :audiences)
+      speech.to_json(include: [:audiences, :comments])
     end
   end
 
   # add a speech, status = new
   post '/speeches' do
-    speech = Speech.new(title: @body['title'], description: @body['description'],
-                        user_id: @userid, expected_duration: @body['expected_duration'],
-                        status: Constants::SPEECH_STATUS::NEW, category: @body['category'])
-    speech.save!
-    speech.to_json
+    ActiveRecord::Base.transaction do
+      speech = Speech.new(title: @body['title'], description: @body['description'],
+                          user_id: @userid, expected_duration: @body['expected_duration'],
+                          status: Constants::SPEECH_STATUS::AUDITING, category: @body['category'])
+      speech.save!
+      if (@body['comment'] && @body['comment'].length > 0)
+        comment = Comment.new(user_id: @userid, speech_id: speech.id, comment: @body['comment'], step: Constants::COMMENT_STEP::AUDITING)
+        comment.save!
+      end
+      speech.to_json(include: :comments)
+    end
   end
 
   # update the basic information of the speech in 'new' status
@@ -40,15 +46,31 @@ class App < Sinatra::Base
   put '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
-    if speech.status != Constants::SPEECH_STATUS::NEW
+    if speech.status != Constants::SPEECH_STATUS::AUDITING
       400
     else
-      speech.title = @body['title']
-      speech.description = @body['description']
-      speech.expected_duration = @body['expected_duration']
-      speech.category = @body['category']
-      speech.save!
-      speech.to_json
+      ActiveRecord::Base.transaction do
+        speech.title = @body['title']
+        speech.description = @body['description']
+        speech.expected_duration = @body['expected_duration']
+        speech.category = @body['category']
+        speech.save!
+        comment = Comment.where("speech_id = ? and step = ?", speech.id, Constants::COMMENT_STEP::AUDITING).first
+        if (@body['comment'] && @body['comment'].length > 0)
+          if comment.nil?
+            comment = Comment.new(user_id: @userid, speech_id: speech.id, comment: @body['comment'], step: Constants::COMMENT_STEP::AUDITING)
+            comment.save!
+          else
+            comment.comment = @body['comment']
+            comment.save!
+          end
+        else
+          unless comment.nil?
+            comment.destroy!
+          end
+        end
+        speech.to_json
+      end
     end
   end
 
@@ -57,7 +79,7 @@ class App < Sinatra::Base
   delete '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
-    if speech.status == Constants::SPEECH_STATUS::NEW
+    if speech.status == Constants::SPEECH_STATUS::AUDITING
       speech.destroy!
       content_type 'text/plain'
       200
@@ -80,7 +102,7 @@ class App < Sinatra::Base
       speech.resource_name = @body['resource_name'] + name
 
       speech.save!
-      speech.to_json(include: :audiences)
+      speech.to_json(include: [:audiences, :comments])
     else
       400
     end
@@ -100,45 +122,27 @@ class App < Sinatra::Base
       speech.resource_url = urls.join('/')
       speech.resource_name = names.join('/')
       speech.save!
-      speech.to_json(include: :audiences)
+      speech.to_json(include: [:audiences, :comments])
     else
       400
     end
   end
 
-  # new -> auditing
-  post '/speeches/:speech_id/submit' do
-    speech = Speech.find(params[:speech_id])
-    self_required! speech.user_id
-    if speech.status == Constants::SPEECH_STATUS::NEW
-      speech.status = Constants::SPEECH_STATUS::AUDITING
-      speech.save!
-      speech.to_json
-    else
-      400
-    end
-  end
-  # auditing || approved -> new, by speaker
-  post '/speeches/:speech_id/withdraw' do
-    speech = Speech.find(params[:speech_id])
-    self_required! speech.user_id
-    if speech.status == Constants::SPEECH_STATUS::AUDITING || speech.status == Constants::SPEECH_STATUS::APPROVED
-      speech.status = Constants::SPEECH_STATUS::NEW
-      speech.save!
-      speech.to_json
-    else
-      400
-    end
-  end
   # auditing -> approved
   post '/speeches/:speech_id/approve' do
     admin_required!
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::SPEECH_STATUS::AUDITING
-      speech.status = Constants::SPEECH_STATUS::APPROVED
-      speech.time = @body['time']
-      speech.save!
-      speech.to_json
+      ActiveRecord::Base.transaction do
+        speech.status = Constants::SPEECH_STATUS::APPROVED
+        speech.time = @body['time']
+        speech.save!
+        if (@body['comment'] && @body['comment'].length > 0)
+          comment = Comment.new(user_id: @userid, speech_id: speech.id, comment: @body['comment'], step: Constants::COMMENT_STEP::APPROVE)
+          comment.save!
+        end
+        speech.to_json(include: :comments)
+      end
     else
       400
     end
@@ -147,10 +151,10 @@ class App < Sinatra::Base
   post '/speeches/:speech_id/reject' do
     admin_required!
     speech = Speech.find(params[:speech_id])
-    if speech.status == Constants::SPEECH_STATUS::AUDITING
-      speech.status = Constants::SPEECH_STATUS::NEW
-      speech.save!
-      speech.to_json
+    if speech.status == Constants::SPEECH_STATUS::AUDITING && @body['comment'] && @body['comment'].length > 0
+      comment = Comment.new(user_id: @userid, speech_id: speech.id, comment: @body['comment'], step: Constants::COMMENT_STEP::REJECT)
+      comment.save!
+      speech.to_json(include: :comments)
     else
       400
     end
@@ -167,7 +171,7 @@ class App < Sinatra::Base
         speech.event_id = JSON.parse(event)['id']
         speech.save!
       end
-      speech.to_json
+      speech.to_json(include: :comments)
     else
       400
     end
@@ -176,10 +180,14 @@ class App < Sinatra::Base
   post '/speeches/:speech_id/disagree' do
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
-    if speech.status == Constants::SPEECH_STATUS::APPROVED
-      speech.status = Constants::SPEECH_STATUS::AUDITING
-      speech.save!
-      speech.to_json
+    if speech.status == Constants::SPEECH_STATUS::APPROVED && @body['comment'] && @body['comment'].length > 0
+      ActiveRecord::Base.transaction do
+        speech.status = Constants::SPEECH_STATUS::AUDITING
+        speech.save!
+        comment = Comment.new(user_id: @userid, speech_id: speech.id, comment: @body['comment'], step: Constants::COMMENT_STEP::DISAGREE)
+        comment.save!
+        speech.to_json(include: :comments)
+      end
     else
       400
     end
@@ -194,7 +202,7 @@ class App < Sinatra::Base
         speech.status = Constants::SPEECH_STATUS::CLOSED
         speech.save!
       end
-      speech.to_json(include: :audiences)
+      speech.to_json(include: [:audiences, :comments])
     else
       400
     end
@@ -208,35 +216,37 @@ class App < Sinatra::Base
 
       ActiveRecord::Base.transaction do
         participants.each{|u|
+          point = 0
+          if u['role'] == Constants::ATTENDANCE_ROLE::SPEAKER
+            point += speech.category == Constants::SPEECH_CATEGORY::MONTHLY ? Constants::POINT::MONTHLY : Constants::POINT::WEEKLY
+          else
+            point += (speech.category == Constants::SPEECH_CATEGORY::MONTHLY ? Constants::POINT::MONTHLY_AUDIENCE : Constants::POINT::WEEKLY_AUDIENCE) + (u['commented'] ? Constants::POINT::COMMENT : 0)
+          end
           not_add_point = true
           user = User.find_by_id(u['user_id'])
           if user.nil?
             user = User.new(id: u['user_id'], role: Constants::USER_ROLE::USER, point_total: 0, point_available: 0)
-            user.change_point(u['point'])
+            user.change_point(point)
             user.save!
             not_add_point = false
           end
           unless Attendance.exists?(user_id: u['user_id'], speech_id: params[:speech_id])
               attendance = Attendance.new(user_id: u['user_id'], speech_id: params[:speech_id],
-                                          role: u['role'], point: u['point'], commented: u['commented'])
+                                          role: u['role'], point: point, commented: u['commented'])
               attendance.save!
               if not_add_point
-                user.change_point(u['point'])
+                user.change_point(point)
                 user.save!
               end
           end
         }
         speech.status = Constants::SPEECH_STATUS::FINISHED
         speech.save!
-        speech.to_json(include: :attendances)
+        speech.to_json(include: [:attendances, :comments])
       end
     else
       400
     end
-  end
-
-  get '/speeches/:speech_id/audiences' do
-    Speech.find(params[:speech_id]).audiences.to_json
   end
 
   # user apply to be an audience
@@ -250,7 +260,7 @@ class App < Sinatra::Base
         audience.save!
       end
     end
-    speech.to_json(include: :audiences)
+    speech.to_json(include: [:audiences, :comments])
   end
 
   # user withdraw his apply to be an audience
@@ -265,46 +275,9 @@ class App < Sinatra::Base
         CalendarHelper::withdraw_apply(request.cookies, @userid, speech.event_id, @userid)
       end
     end
-    speech.to_json(include: :audiences)
+    speech.to_json(include: [:audiences, :comments])
   end
 
-  get '/speeches/:speech_id/participants' do
-    Speech.find(params[:speech_id]).participants.to_json
-  end
-
-  # add a participant, add point to the user
-  post '/speeches/:speech_id/participants' do
-    admin_required!
-    unless Attendance.exists?(user_id: @body['user_id'], speech_id: params[:speech_id])
-      ActiveRecord::Base.transaction do
-        attendance = Attendance.new(user_id: @body['user_id'], speech_id: params[:speech_id],
-                                    role: @body['role'], point: @body['point'], commented: @body['commented'])
-        attendance.save!
-        user = User.find(@body['user_id'])
-        user.change_point(@body['point'])
-        user.save!
-      end
-    end
-    content_type 'text/plain'
-    200
-  end
-
-  # delete a participant, minus point from the user
-  delete '/speeches/:speech_id/participants/:user_id' do
-    admin_required!
-    attendance = Attendance.where(user_id: params[:user_id], speech_id: params[:speech_id])
-    unless attendance.empty?
-      ActiveRecord::Base.transaction do
-        user = User.find(params[:user_id])
-        user.change_point(-attendance.take.point)
-        user.save!
-
-        Attendance.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
-      end
-    end
-    content_type 'text/plain'
-    200
-  end
 
   # mark user likes a speech and add points to the speaker
   post '/speeches/:user_id/like/:speech_id' do
@@ -317,15 +290,15 @@ class App < Sinatra::Base
 
         speaker_id = speech.user_id
         speaker_attendance = Attendance.where(user_id: speaker_id, speech_id: params[:speech_id]).first
-        speaker_attendance.point = speaker_attendance.point + @body['point']
+        speaker_attendance.point = speaker_attendance.point + Constants::POINT::LIKE
         speaker_attendance.save!
 
         speaker = User.find(speaker_id)
-        speaker.change_point(@body['point'])
+        speaker.change_point(Constants::POINT::LIKE)
         speaker.save!
       end
     end
-    speech.to_json(include: :attendances)
+    speech.to_json(include: [:attendances, :comments])
   end
 
 end

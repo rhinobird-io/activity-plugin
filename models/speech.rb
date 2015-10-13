@@ -8,7 +8,7 @@ class Speech < ActiveRecord::Base
   # confirmed: speaker agrees the arrangement
   # finish: the speech is finished.
   # closed: close by the speaker or admin
-  validates :status, presence: true, inclusion: {in: [Constants::SPEECH_STATUS::NEW, Constants::SPEECH_STATUS::AUDITING,
+  validates :status, presence: true, inclusion: {in: [Constants::SPEECH_STATUS::AUDITING,
                                                       Constants::SPEECH_STATUS::APPROVED, Constants::SPEECH_STATUS::CONFIRMED,
                                                       Constants::SPEECH_STATUS::FINISHED, Constants::SPEECH_STATUS::CLOSED], message: "%{value} is not a valid role"}
   validates :category, presence: true, inclusion: {in: [Constants::SPEECH_CATEGORY::WEEKLY, Constants::SPEECH_CATEGORY::MONTHLY], message: "%{value} is not a valid category"}
@@ -23,4 +23,7 @@ class Speech < ActiveRecord::Base
   has_many :attendances
   # users who really attended this speech, including as audiences and speakers
   has_many :participants, :through => :attendances, :source => :user
+
+  has_many :comments, -> {order(id: :desc)}
+
 end

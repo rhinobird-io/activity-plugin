@@ -35,17 +35,25 @@ namespace :db do
         end
       end
 
+      50.times do
+        Comment.create!({
+                                   user_id: 16,
+                                   speech_id: Faker::Number.between(1, 50),
+                                   comment: Faker::Lorem.sentence,
+                                   step: Constants::SPEECH_STATUS::AUDITING
+                               })
+      end
 
       20.times do
         AudienceRegistration.create!({
                              user_id: 16,#Faker::Number.between(1, 20),
-                             speech_id: Faker::Number.between(1, 60)
+                             speech_id: Faker::Number.between(1, 50)
                          })
       end
       20.times do
         Attendance.create!({
                              user_id: 16,#Faker::Number.between(1, 20),
-                             speech_id: Faker::Number.between(1, 60),
+                             speech_id: Faker::Number.between(1, 50),
                              role: Faker::Number.between(0, 10) == 10 ? Constants::ATTENDANCE_ROLE::SPEAKER : Constants::ATTENDANCE_ROLE::AUDIENCE,
                              point: Faker::Number.between(1, 50),
                              commented: false

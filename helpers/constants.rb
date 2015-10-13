@@ -1,12 +1,10 @@
 module Constants
-  # new: newly created, draft.
   # auditing: speaker submits and waits for auditing.
   # approved: admin approves and arranges time for it
   # confirmed: speaker agrees the arrangement
   # finish: the speech is finished.
   # closed: close by the speaker or admin
   module SPEECH_STATUS
-    NEW = "new"
     AUDITING = "auditing"
     APPROVED = "approved"
     CONFIRMED = "confirmed"
@@ -32,5 +30,21 @@ module Constants
   module EXCHANGE_STATUS
     NEW = 0
     SENT = 1
+  end
+
+  module COMMENT_STEP
+    AUDITING = "auditing"
+    REJECT = "reject"
+    APPROVE = "approve"
+    DISAGREE = "disagree"
+  end
+
+  module POINT
+    MONTHLY = 200
+    WEEKLY = 100
+    MONTHLY_AUDIENCE = 20
+    WEEKLY_AUDIENCE = 10
+    COMMENT = 2
+    LIKE = 2
   end
 end
