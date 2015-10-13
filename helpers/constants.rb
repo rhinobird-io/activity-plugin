@@ -38,4 +38,13 @@ module Constants
     APPROVE = "approve"
     DISAGREE = "disagree"
   end
+
+  module POINT
+    MONTHLY = 200
+    WEEKLY = 100
+    MONTHLY_AUDIENCE = 20
+    WEEKLY_AUDIENCE = 10
+    COMMENT = 2
+    LIKE = 2
+  end
 end

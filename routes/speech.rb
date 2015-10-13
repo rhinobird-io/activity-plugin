@@ -216,20 +216,26 @@ class App < Sinatra::Base
 
       ActiveRecord::Base.transaction do
         participants.each{|u|
+          point = 0
+          if u['role'] == Constants::ATTENDANCE_ROLE::SPEAKER
+            point += speech.category == Constants::SPEECH_CATEGORY::MONTHLY ? Constants::POINT::MONTHLY : Constants::POINT::WEEKLY
+          else
+            point += (speech.category == Constants::SPEECH_CATEGORY::MONTHLY ? Constants::POINT::MONTHLY_AUDIENCE : Constants::POINT::WEEKLY_AUDIENCE) + (u['commented'] ? Constants::POINT::COMMENT : 0)
+          end
           not_add_point = true
           user = User.find_by_id(u['user_id'])
           if user.nil?
             user = User.new(id: u['user_id'], role: Constants::USER_ROLE::USER, point_total: 0, point_available: 0)
-            user.change_point(u['point'])
+            user.change_point(point)
             user.save!
             not_add_point = false
           end
           unless Attendance.exists?(user_id: u['user_id'], speech_id: params[:speech_id])
               attendance = Attendance.new(user_id: u['user_id'], speech_id: params[:speech_id],
-                                          role: u['role'], point: u['point'], commented: u['commented'])
+                                          role: u['role'], point: point, commented: u['commented'])
               attendance.save!
               if not_add_point
-                user.change_point(u['point'])
+                user.change_point(point)
                 user.save!
               end
           end
@@ -284,15 +290,15 @@ class App < Sinatra::Base
 
         speaker_id = speech.user_id
         speaker_attendance = Attendance.where(user_id: speaker_id, speech_id: params[:speech_id]).first
-        speaker_attendance.point = speaker_attendance.point + @body['point']
+        speaker_attendance.point = speaker_attendance.point + Constants::POINT::LIKE
         speaker_attendance.save!
 
         speaker = User.find(speaker_id)
-        speaker.change_point(@body['point'])
+        speaker.change_point(Constants::POINT::LIKE)
         speaker.save!
       end
     end
-    speech.to_json(include: :attendances)
+    speech.to_json(include: [:attendances, :comments])
   end
 
 end
