@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150921084107) do
+ActiveRecord::Schema.define(version: 20151012115245) do
 
   create_table "attendances", force: :cascade do |t|
     t.integer  "user_id"
@@ -21,6 +21,7 @@ ActiveRecord::Schema.define(version: 20150921084107) do
     t.boolean  "commented"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.boolean  "liked",      default: false
   end
 
   add_index "attendances", ["speech_id"], name: "index_attendances_on_speech_id"

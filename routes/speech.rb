@@ -306,4 +306,26 @@ class App < Sinatra::Base
     200
   end
 
+  # mark user likes a speech and add points to the speaker
+  post '/speeches/:user_id/like/:speech_id' do
+    speech = Speech.find(params[:speech_id])
+    if Attendance.exists?(user_id: params['user_id'], speech_id: params[:speech_id], liked: false)
+      ActiveRecord::Base.transaction do
+        attendance = Attendance.where(user_id: params[:user_id], speech_id: params[:speech_id]).first
+        attendance.liked = true
+        attendance.save!
+
+        speaker_id = speech.user_id
+        speaker_attendance = Attendance.where(user_id: speaker_id, speech_id: params[:speech_id]).first
+        speaker_attendance.point = speaker_attendance.point + @body['point']
+        speaker_attendance.save!
+
+        speaker = User.find(speaker_id)
+        speaker.change_point(@body['point'])
+        speaker.save!
+      end
+    end
+    speech.to_json(include: :attendances)
+  end
+
 end
