@@ -30,12 +30,19 @@ namespace :db do
                              status: Constants::SPEECH_STATUS.const_get(status),
                              category: Faker::Number.between(0, 1) == 0 ? Constants::SPEECH_CATEGORY::WEEKLY : Constants::SPEECH_CATEGORY::MONTHLY,
                              time: Faker::Time.between(1.months.ago, 3.months.from_now),
-                             expected_duration: Faker::Number.between(10, 180),
-                             comment: Faker::Lorem.sentence
+                             expected_duration: Faker::Number.between(10, 180)
                          })
         end
       end
 
+      50.times do
+        Comment.create!({
+                                   user_id: 16,
+                                   speech_id: Faker::Number.between(1, 50),
+                                   comment: Faker::Lorem.sentence,
+                                   step: Constants::SPEECH_STATUS::AUDITING
+                               })
+      end
 
       20.times do
         AudienceRegistration.create!({

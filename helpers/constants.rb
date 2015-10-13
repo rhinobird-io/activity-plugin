@@ -31,4 +31,11 @@ module Constants
     NEW = 0
     SENT = 1
   end
+
+  module COMMENT_STEP
+    AUDITING = "auditing"
+    REJECT = "reject"
+    APPROVE = "approve"
+    DISAGREE = "disagree"
+  end
 end

@@ -12,6 +12,7 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema.define(version: 20151012115245) do
+ActiveRecord::Schema.define(version: 20151013032600) do
 
   create_table "attendances", force: :cascade do |t|
     t.integer  "user_id"
@@ -36,6 +37,17 @@ ActiveRecord::Schema.define(version: 20151012115245) do
 
   add_index "audience_registrations", ["speech_id"], name: "index_audience_registrations_on_speech_id"
   add_index "audience_registrations", ["user_id"], name: "index_audience_registrations_on_user_id"
+
+  create_table "comments", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "speech_id"
+    t.string   "comment"
+    t.string   "step"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "comments", ["speech_id"], name: "index_comments_on_speech_id"
 
   create_table "exchanges", force: :cascade do |t|
     t.integer  "user_id"
