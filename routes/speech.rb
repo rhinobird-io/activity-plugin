@@ -292,7 +292,7 @@ class App < Sinatra::Base
   post '/speeches/:speech_id/like' do
     user_id = @userid
     speech = Speech.find(params[:speech_id])
-    if Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
+    if user_id != speech.user_id && Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
       ActiveRecord::Base.transaction do
         attendance = Attendance.where(user_id: user_id, speech_id: params[:speech_id]).first
         attendance.liked = true
@@ -325,7 +325,7 @@ class App < Sinatra::Base
     end
 
     speech = Speech.find(params[:speech_id])
-    if Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
+    if user_id != speech.user_id && Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
       ActiveRecord::Base.transaction do
         attendance = Attendance.where(user_id: user_id, speech_id: params[:speech_id]).first
         attendance.liked = true
