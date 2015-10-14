@@ -161,7 +161,6 @@ class App < Sinatra::Base
   end
   # approved -> confirmed
   post '/speeches/:speech_id/agree' do
-    puts request.cookies
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
     if speech.status == Constants::SPEECH_STATUS::APPROVED
@@ -239,6 +238,18 @@ class App < Sinatra::Base
                 user.save!
               end
           end
+          like_url = "/speeches/#{speech.id}/like?user_id=#{u['user_id']}"
+          encrypted = EncryptHelper.encrypt(like_url)
+          email_body = "You got #{point} points from the activity " +
+              "<a href='http://rhinobird.workslan/platform/activity/speeches/#{speech.id}'>#{speech.title}</a><br/>"
+          if u['user_id'] != speech.user_id
+            email_body += "Click <a target='_blank' href='http://activity.rhinobird.workslan/speeches/#{speech.id}/like?user_id=#{u['user_id']}&hash=#{encrypted}'><strong>like</strong></a> if you like this activity.</form>"
+          end
+          MailHelper::send(u['user_id'],
+                           "You got #{point} points from the activity #{speech.title}",
+                           "/platform/activity/speeches/#{speech.id}",
+                           "[RhinoBird] You got #{point} points",
+                           email_body, request.cookies, @userid)
         }
         speech.status = Constants::SPEECH_STATUS::FINISHED
         speech.save!
@@ -280,11 +291,12 @@ class App < Sinatra::Base
 
 
   # mark user likes a speech and add points to the speaker
-  post '/speeches/:user_id/like/:speech_id' do
+  post '/speeches/:speech_id/like' do
+    user_id = @userid
     speech = Speech.find(params[:speech_id])
-    if Attendance.exists?(user_id: params['user_id'], speech_id: params[:speech_id], liked: false)
+    if user_id != speech.user_id && Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
       ActiveRecord::Base.transaction do
-        attendance = Attendance.where(user_id: params[:user_id], speech_id: params[:speech_id]).first
+        attendance = Attendance.where(user_id: user_id, speech_id: params[:speech_id]).first
         attendance.liked = true
         attendance.save!
 
@@ -300,5 +312,38 @@ class App < Sinatra::Base
     end
     speech.to_json(include: [:attendances, :comments])
   end
+  # mark user likes a speech and add points to the speaker
+  # for link from email
+  get '/speeches/:speech_id/like' do
+    user_id = @userid
+    unless params[:user_id].nil?
+      path = request.path
+      if EncryptHelper.encrypt("#{path}?user_id=#{params[:user_id]}") == params[:hash]
+        user_id = params[:user_id]
+      else
+        halt 401
+      end
+    end
 
+    speech = Speech.find(params[:speech_id])
+    if user_id != speech.user_id && Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
+      ActiveRecord::Base.transaction do
+        attendance = Attendance.where(user_id: user_id, speech_id: params[:speech_id]).first
+        attendance.liked = true
+        attendance.save!
+
+        speaker_id = speech.user_id
+        speaker_attendance = Attendance.where(user_id: speaker_id, speech_id: params[:speech_id]).first
+        speaker_attendance.point = speaker_attendance.point + Constants::POINT::LIKE
+        speaker_attendance.save!
+
+        speaker = User.find(speaker_id)
+        speaker.change_point(Constants::POINT::LIKE)
+        speaker.save!
+      end
+    end
+    content_type 'text/plain'
+    status 200
+    body 'Your have marked this activity as liked successfully.'
+  end
 end
