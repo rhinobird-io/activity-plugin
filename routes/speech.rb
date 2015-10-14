@@ -317,9 +317,8 @@ class App < Sinatra::Base
   get '/speeches/:speech_id/like' do
     user_id = @userid
     unless params[:user_id].nil?
-      fullpath = request.fullpath
-      arr = fullpath.split("&hash=")
-      if EncryptHelper.encrypt(arr[0]) == arr[1]
+      path = request.path
+      if EncryptHelper.encrypt("#{path}?user_id=#{params[:user_id]}") == params[:hash]
         user_id = params[:user_id]
       else
         halt 404
@@ -345,8 +344,6 @@ class App < Sinatra::Base
     end
     content_type 'text/plain'
     status 200
-    body 'success'
-
+    body 'Your have marked this activity as liked successfully.'
   end
-
 end
