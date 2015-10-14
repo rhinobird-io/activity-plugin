@@ -240,14 +240,16 @@ class App < Sinatra::Base
           end
           like_url = "/speeches/#{speech.id}/like?user_id=#{u['user_id']}"
           encrypted = EncryptHelper.encrypt(like_url)
+          email_body = "You got #{point} points from the activity " +
+              "<a href='http://rhinobird.workslan/platform/activity/speeches/#{speech.id}'>#{speech.title}</a><br/>"
+          if u['user_id'] != speech.user_id
+            email_body += "Click <a target='_blank' href='http://activity.rhinobird.workslan/speeches/#{speech.id}/like?user_id=#{u['user_id']}&hash=#{encrypted}'><strong>like</strong></a> if you like this activity.</form>"
+          end
           MailHelper::send(u['user_id'],
                            "You got #{point} points from the activity #{speech.title}",
                            "/platform/activity/speeches/#{speech.id}",
                            "[RhinoBird] You got #{point} points",
-                           "You got #{point} points from the activity " +
-                               "<a href='http://rhinobird.workslan/platform/activity/speeches/#{speech.id}'>#{speech.title}</a><br/>" +
-                               "Click <a target='_blank' href='http://activity.rhinobird.workslan/speeches/#{speech.id}/like?user_id=#{u['user_id']}&hash=#{encrypted}'><strong>like</strong></a> if you like this activity.</form>",
-                           request.cookies, @userid)
+                           email_body, request.cookies, @userid)
         }
         speech.status = Constants::SPEECH_STATUS::FINISHED
         speech.save!

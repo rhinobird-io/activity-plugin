@@ -1,5 +1,4 @@
 require 'openssl'
-require 'base64'
 
 class EncryptHelper
   KEY = ENV['KEY'] || '123'
