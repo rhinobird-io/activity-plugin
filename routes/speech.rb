@@ -321,7 +321,7 @@ class App < Sinatra::Base
       if EncryptHelper.encrypt("#{path}?user_id=#{params[:user_id]}") == params[:hash]
         user_id = params[:user_id]
       else
-        halt 404
+        halt 401
       end
     end
 
