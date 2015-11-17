@@ -198,6 +198,8 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
       ActiveRecord::Base.transaction do
         CalendarHelper::delete_event(request.cookies, @userid, speech.event_id)
+        comment = Comment.new(user_id: @userid, speech_id: speech.id, comment: @body['comment'], step: Constants::COMMENT_STEP::CLOSED)
+        comment.save!
         speech.status = Constants::SPEECH_STATUS::CLOSED
         speech.save!
       end
