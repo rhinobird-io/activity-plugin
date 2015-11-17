@@ -37,6 +37,7 @@ module Constants
     REJECT = "reject"
     APPROVE = "approve"
     DISAGREE = "disagree"
+    CLOSED = "closed"
   end
 
   module POINT
