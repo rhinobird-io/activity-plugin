@@ -3,16 +3,16 @@ class App < Sinatra::Base
   get '/prizes' do
     column = params[:column] == 'price' ? 'price' : 'exchanged_times'
     order = params[:order] == 'asc' ? 'asc' : 'desc'
-    Prize.all.order(column + ' ' + order).to_json
+    Prize.where("status != 'deleted'").order(column + ' ' + order).to_json
   end
 
   get '/prizes/:prize_id' do
-    Prize.find(params[:prize_id]).to_json
+    Prize.where("id = ? and status != 'deleted'", params[:prize_id]).take.to_json
   end
 
   # retrieve exchange history of this prize, including users
   get '/prizes/:prize_id/exchanges' do
-    Prize.find(params[:prize_id]).exchanges.to_json
+    Prize.where("id = ? and status != 'deleted'", params[:prize_id]).take.exchanges.to_json
   end
 
   post '/prizes' do
@@ -25,7 +25,7 @@ class App < Sinatra::Base
 
   put '/prizes/:prize_id' do
     admin_required!
-    prize = Prize.find(params[:prize_id])
+    prize = Prize.where("id = ? and status != 'deleted'", params[:prize_id]).take
     prize.name = @body['name']
     prize.description = @body['description']
     prize.picture_url = @body['picture_url']
@@ -36,7 +36,9 @@ class App < Sinatra::Base
 
   delete '/prizes/:prize_id' do
     admin_required!
-    Prize.find(params[:prize_id]).destroy!
+    prize = Prize.find(params[:prize_id])
+    prize.status = 'deleted'
+    prize.save!
     content_type 'text/plain'
     200
   end
@@ -51,7 +53,7 @@ class App < Sinatra::Base
   end
 
   post '/exchanges' do
-    prize = Prize.find(@body['prize_id'])
+    prize = Prize.where("id = ? and status != 'deleted'", @body['prize_id']).take
     if @user.point_available < prize.price
       status 400
       body 'The available point of this user is not enough to exchange this prize.'

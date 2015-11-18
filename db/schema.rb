@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151013032600) do
+ActiveRecord::Schema.define(version: 20151118095331) do
 
   create_table "attendances", force: :cascade do |t|
     t.integer  "user_id"
@@ -71,10 +71,12 @@ ActiveRecord::Schema.define(version: 20151013032600) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer  "exchanged_times"
+    t.string   "status",          default: ""
   end
 
   add_index "prizes", ["exchanged_times"], name: "index_prizes_on_exchanged_times"
   add_index "prizes", ["price"], name: "index_prizes_on_price"
+  add_index "prizes", ["status"], name: "index_prizes_on_status"
 
   create_table "speeches", force: :cascade do |t|
     t.string   "title"
