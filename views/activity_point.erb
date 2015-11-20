@@ -1,0 +1,13 @@
+<div style="max-width: 600px; margin: auto;">
+  <div style="font-size: 1.2em; text-align: center; line-height: 1.5em;">
+    You got <%= point%> points from the activity <a href='http://rhinobird.workslan/platform/activity/activities/<%= id%>'><%= title%></a>
+    <br/>
+    <% if is_owner == false %>
+    Click <a target='_blank' href='http://activity.rhinobird.workslan/speeches/<%= id%>/like?user_id=<%= user_id%>&hash=<%= hash%>'><strong>like</strong></a> if you like this activity.
+    <% end %>
+  </div>
+
+  <br/>
+  <hr>
+  <p style="text-align: center;">Designed by ATE-Shanghai, © Works Applications Co.,Ltd.</p>
+</div>

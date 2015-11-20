@@ -16,4 +16,13 @@ class MailHelper
         {:cookies => cookies, :content_type => :json, :x_user => x_user}
     )
   end
+  def self.batchSend(notifications, cookies, x_user)
+    RestClient.post(
+        NOTIFICATION_URL + '/batch',
+        {
+            'notifications': notifications
+        }.to_json,
+        {:cookies => cookies, :content_type => :json, :x_user => x_user}
+    )
+  end
 end
