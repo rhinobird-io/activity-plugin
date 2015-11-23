@@ -216,6 +216,7 @@ class App < Sinatra::Base
       participants = @body['participants']
 
       ActiveRecord::Base.transaction do
+        notifications = []
         participants.each{|u|
           point = 0
           if u['role'] == Constants::ATTENDANCE_ROLE::SPEAKER
@@ -242,23 +243,40 @@ class App < Sinatra::Base
           end
           like_url = "/speeches/#{speech.id}/like?user_id=#{u['user_id']}"
           encrypted = EncryptHelper.encrypt(like_url)
-          email_body = "You got #{point} points from the activity " +
-              "<a href='http://rhinobird.workslan/platform/activity/activities/#{speech.id}'>#{speech.title}</a><br/>"
-          if u['user_id'] != speech.user_id
-            email_body += "Click <a target='_blank' href='http://activity.rhinobird.workslan/speeches/#{speech.id}/like?user_id=#{u['user_id']}&hash=#{encrypted}'><strong>like</strong></a> if you like this activity.</form>"
-          end
-          MailHelper::send(u['user_id'],
-                           "You got #{point} points from the activity #{speech.title}",
-                           "/platform/activity/activities/#{speech.id}",
-                           "[RhinoBird] You got #{point} points",
-                           email_body, request.cookies, @userid)
+          controller = EmailBinding.new(speech.id, speech.title, u['user_id'], encrypted, point, u['user_id'] == speech.user_id)
+          notifications.push({
+                                 'users': [u['user_id']],
+                                 'teams': [],
+                                 'content': {content: "You got #{point} points from the activity #{speech.title}"},
+                                 'url': "/platform/activity/activities/#{speech.id}",
+                                 'email_subject': "[RhinoBird] You got #{point} points",
+                                 'email_body': ERB.new(File.read('./views/activity_point.erb')).result(controller.get_binding)
+                             })
         }
+        MailHelper::batchSend(notifications, request.cookies, @userid)
+
         speech.status = Constants::SPEECH_STATUS::FINISHED
         speech.save!
         speech.to_json(include: [:attendances, :comments])
       end
     else
       400
+    end
+  end
+
+  class EmailBinding
+    attr_reader :id, :title, :user_id, :hash, :point, :is_owner
+    def initialize(id, title, user_id, hash, point, is_owner)
+      @id = id
+      @title = title
+      @user_id = user_id
+      @hash = hash
+      @point = point
+      @is_owner = is_owner
+    end
+
+    def get_binding
+      binding
     end
   end
 
@@ -344,8 +362,20 @@ class App < Sinatra::Base
         speaker.save!
       end
     end
-    content_type 'text/plain'
+    controller = LikeBinding.new(speech.id, speech.title)
+    content_type 'text/html'
     status 200
-    body 'Your have marked this activity as liked successfully.'
+    body ERB.new(File.read('./views/like.erb')).result(controller.get_binding)
+  end
+
+  class LikeBinding
+    attr_reader :id, :title
+    def initialize(id, title)
+      @id = id
+      @title = title
+    end
+    def get_binding
+      binding
+    end
   end
 end

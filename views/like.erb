@@ -1,0 +1,26 @@
+<div style="max-width: 600px; margin: auto;">
+  <div style="font-size: 1.2em; text-align: center;">
+    You have marked <a href='http://rhinobird.workslan/platform/activity/activities/<%= id%>'><%= title%></a> as liked successfully.
+    <br/><br/>
+    Thank you for your feedback.
+    <br/><br/>
+    You will be redirected to the activity detail page in <span id="second" style="color: rgb(255,64,129)">5</span> s
+  </div>
+
+  <br/>
+  <hr>
+  <p style="text-align: center;">Designed by ATE-Shanghai, © Works Applications Co.,Ltd.</p>
+</div>
+<script>
+  var left = 5;
+  var countDown = window.setInterval(function () {
+    left -= 1;
+    document.getElementById('second').innerHTML = left;
+    if (left <= 0) {
+      clearInterval(countDown);
+    }
+  }, 1000);
+  window.setTimeout(function () {
+    window.location.replace("http://rhinobird.workslan/platform/activity/activities/<%= id%>")
+  }, 5000);
+</script>
