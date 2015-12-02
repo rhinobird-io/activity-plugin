@@ -14,7 +14,7 @@ class App < Sinatra::Base
   # you can use a query parameter 'limit' to retrieve a specific amount of user
   post '/users/rank' do
     limit = params[:limit] || 10
-    User.order(point_total: :desc, id: :asc).limit(limit).to_json
+    User.order(point_total: :desc).limit(limit).to_json
   end
 
   # retrieve one user
