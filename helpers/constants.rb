@@ -48,4 +48,9 @@ module Constants
     COMMENT = 2
     LIKE = 2
   end
+
+  module ATTACHMENT_TYPE
+    NORMAL = "normal"
+    VIDEO = "video"
+  end
 end
