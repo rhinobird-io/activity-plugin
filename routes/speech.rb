@@ -95,7 +95,7 @@ class App < Sinatra::Base
         halt 401
     end
 
-    if speech.status == Constants::SPEECH_STATUS::CONFIRMED
+    if speech.status == Constants::SPEECH_STATUS::CONFIRMED || @user.is_admin
       if @body['attachmentType'] == Constants::ATTACHMENT_TYPE::VIDEO
           url = speech.video_resource_url || ""
           url = '/' + url unless url.empty?
@@ -117,7 +117,7 @@ class App < Sinatra::Base
       end
 
       speech.save!
-      speech.to_json(include: [:audiences, :comments])
+      speech.to_json(include: [:attendances, :audiences, :comments])
     else
       400
     end
@@ -129,7 +129,7 @@ class App < Sinatra::Base
         halt 401
     end
 
-    if speech.status == Constants::SPEECH_STATUS::CONFIRMED
+    if speech.status == Constants::SPEECH_STATUS::CONFIRMED  || @user.is_admin
       attachmentType = params[:type]
 
       if attachmentType == Constants::ATTACHMENT_TYPE::VIDEO
@@ -155,7 +155,7 @@ class App < Sinatra::Base
       end
 
       speech.save!
-      speech.to_json(include: [:audiences, :comments])
+      speech.to_json(include: [:attendances,:audiences, :comments])
     else
       400
     end
