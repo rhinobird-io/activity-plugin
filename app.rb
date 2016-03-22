@@ -1,7 +1,5 @@
 require 'sinatra/base'
 require 'sinatra/activerecord'
-require 'sinatra/namespace'
-require 'resque'
 require 'rufus-scheduler'
 require 'mail'
 
@@ -9,8 +7,7 @@ EMAIL_ADDRESS = ENV['EMAIL_ADDRESS'] || 'wang_bo@worksap.co.jp'
 class App < Sinatra::Base
 
   scheduler = Rufus::Scheduler.new
-
-  # Check events that are not full day.
+  
   scheduler.every '30s' do
     now = DateTime.now
     half_an_hour = 30.minute
