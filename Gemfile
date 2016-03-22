@@ -10,6 +10,9 @@ gem 'pg'
 gem 'rake'
 gem 'faker'
 gem 'rest-client'
+gem 'rufus-scheduler'
+gem 'resque'
+gem 'mail'
 
 group :development do
   gem 'sqlite3'
