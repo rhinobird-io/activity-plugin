@@ -199,8 +199,8 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::APPROVED
       ActiveRecord::Base.transaction do
         speech.status = Constants::SPEECH_STATUS::CONFIRMED
-        event = CalendarHelper::post_event(request.cookies, @userid, speech.title, speech.description, speech.time, speech.time, @userid)
-        speech.event_id = JSON.parse(event)['id']
+        # event = CalendarHelper::post_event(request.cookies, @userid, speech.title, speech.description, speech.time, speech.time, @userid)
+        # speech.event_id = JSON.parse(event)['id']
         speech.save!
       end
       speech.to_json(include: :comments)
@@ -230,7 +230,7 @@ class App < Sinatra::Base
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
       ActiveRecord::Base.transaction do
-        CalendarHelper::delete_event(request.cookies, @userid, speech.event_id)
+        # CalendarHelper::delete_event(request.cookies, @userid, speech.event_id)
         comment = Comment.new(user_id: @userid, speech_id: speech.id, comment: @body['comment'], step: Constants::COMMENT_STEP::CLOSED)
         comment.save!
         speech.status = Constants::SPEECH_STATUS::CLOSED
@@ -319,7 +319,7 @@ class App < Sinatra::Base
     halt 400 if speech.status != Constants::SPEECH_STATUS::CONFIRMED
     if !(AudienceRegistration.exists?(user_id: @userid, speech_id: params[:speech_id])) && speech.user_id != @userid
       ActiveRecord::Base.transaction do
-        CalendarHelper::apply(request.cookies, @userid, speech.event_id, @userid)
+        # CalendarHelper::apply(request.cookies, @userid, speech.event_id, @userid)
         audience = AudienceRegistration.new(user_id: @userid, speech_id: params[:speech_id])
         audience.save!
       end
@@ -336,7 +336,7 @@ class App < Sinatra::Base
     unless registration.empty?
       ActiveRecord::Base.transaction do
         AudienceRegistration.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
-        CalendarHelper::withdraw_apply(request.cookies, @userid, speech.event_id, @userid)
+        # CalendarHelper::withdraw_apply(request.cookies, @userid, speech.event_id, @userid)
       end
     end
     speech.to_json(include: [:audiences, :comments])
