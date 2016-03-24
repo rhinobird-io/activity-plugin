@@ -44,7 +44,7 @@ class App < Sinatra::Base
             </tr>
             <tr>
               <td class='title'>When</td>
-              <td>#{e.time.localtime}</td>
+              <td>#{e.time.in_time_zone('Beijing')}</td>
             </tr>
             <tr>
               <td class='title'>Duration</td>
