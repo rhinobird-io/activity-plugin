@@ -26,12 +26,13 @@ class App < Sinatra::Base
     end
   end
 
-  # add a speech, status = new
+  # add a speech, status = auditing
   post '/speeches' do
     ActiveRecord::Base.transaction do
       speech = Speech.new(title: @body['title'], description: @body['description'],
                           user_id: @userid, expected_duration: @body['expected_duration'],
-                          status: Constants::SPEECH_STATUS::AUDITING, category: @body['category'])
+                          status: Constants::SPEECH_STATUS::AUDITING, category: @body['category'],
+                          speaker_name: @body['speaker_name'])
       speech.save!
       if (@body['comment'] && @body['comment'].length > 0)
         comment = Comment.new(user_id: @userid, speech_id: speech.id, comment: @body['comment'], step: Constants::COMMENT_STEP::AUDITING)
@@ -41,8 +42,8 @@ class App < Sinatra::Base
     end
   end
 
-  # update the basic information of the speech in 'new' status
-  # only 'new' speeches can be edited
+  # update the basic information of the speech in 'auditing' status
+  # only 'auditing' speeches can be edited
   put '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
@@ -54,6 +55,7 @@ class App < Sinatra::Base
         speech.description = @body['description']
         speech.expected_duration = @body['expected_duration']
         speech.category = @body['category']
+        speech.speaker_name = @body['speaker_name']
         speech.save!
         comment = Comment.where("speech_id = ? and step = ?", speech.id, Constants::COMMENT_STEP::AUDITING).first
         if (@body['comment'] && @body['comment'].length > 0)
@@ -74,8 +76,8 @@ class App < Sinatra::Base
     end
   end
 
-  # delete a speech in 'new' status
-  # only 'new' speeches can be deleted
+  # delete a speech in 'auditing' status
+  # only 'auditing' speeches can be deleted
   delete '/speeches/:speech_id' do
     speech = Speech.find(params[:speech_id])
     self_required! speech.user_id
@@ -180,7 +182,7 @@ class App < Sinatra::Base
       400
     end
   end
-  # auditing -> new, by admin
+  # reject by admin, speech status remains the same
   post '/speeches/:speech_id/reject' do
     admin_required!
     speech = Speech.find(params[:speech_id])
@@ -199,8 +201,6 @@ class App < Sinatra::Base
     if speech.status == Constants::SPEECH_STATUS::APPROVED
       ActiveRecord::Base.transaction do
         speech.status = Constants::SPEECH_STATUS::CONFIRMED
-        # event = CalendarHelper::post_event(request.cookies, @userid, speech.title, speech.description, speech.time, speech.time, @userid)
-        # speech.event_id = JSON.parse(event)['id']
         speech.save!
       end
       speech.to_json(include: :comments)
@@ -230,7 +230,6 @@ class App < Sinatra::Base
     speech = Speech.find(params[:speech_id])
     if speech.status == Constants::SPEECH_STATUS::CONFIRMED
       ActiveRecord::Base.transaction do
-        # CalendarHelper::delete_event(request.cookies, @userid, speech.event_id)
         comment = Comment.new(user_id: @userid, speech_id: speech.id, comment: @body['comment'], step: Constants::COMMENT_STEP::CLOSED)
         comment.save!
         speech.status = Constants::SPEECH_STATUS::CLOSED
@@ -286,7 +285,9 @@ class App < Sinatra::Base
                                  'email_body': ERB.new(File.read('./views/activity_point.erb')).result(controller.get_binding)
                              })
         }
-        MailHelper::batchSend(notifications, request.cookies, @userid)
+        if notifications.length > 0
+          MailHelper::batchSend(notifications, request.cookies, @userid)
+        end
 
         speech.status = Constants::SPEECH_STATUS::FINISHED
         speech.save!
@@ -316,10 +317,9 @@ class App < Sinatra::Base
   # user apply to be an audience
   post '/speeches/:speech_id/audiences' do
     speech = Speech.find(params[:speech_id])
-    halt 400 if speech.status != Constants::SPEECH_STATUS::CONFIRMED
+    halt 400 if speech.status != Constants::SPEECH_STATUS::CONFIRMED || withSpeakerName(speech)
     if !(AudienceRegistration.exists?(user_id: @userid, speech_id: params[:speech_id])) && speech.user_id != @userid
       ActiveRecord::Base.transaction do
-        # CalendarHelper::apply(request.cookies, @userid, speech.event_id, @userid)
         audience = AudienceRegistration.new(user_id: @userid, speech_id: params[:speech_id])
         audience.save!
       end
@@ -331,12 +331,11 @@ class App < Sinatra::Base
   delete '/speeches/:speech_id/audiences/:user_id' do
     self_required! params[:user_id].to_i
     speech = Speech.find(params[:speech_id])
-    halt 400 if speech.status != Constants::SPEECH_STATUS::CONFIRMED
+    halt 400 if speech.status != Constants::SPEECH_STATUS::CONFIRMED || withSpeakerName(speech)
     registration = AudienceRegistration.where(user_id: params[:user_id], speech_id: params[:speech_id])
     unless registration.empty?
       ActiveRecord::Base.transaction do
         AudienceRegistration.destroy_all(user_id: params[:user_id], speech_id: params[:speech_id])
-        # CalendarHelper::withdraw_apply(request.cookies, @userid, speech.event_id, @userid)
       end
     end
     speech.to_json(include: [:audiences, :comments])
@@ -347,7 +346,7 @@ class App < Sinatra::Base
   post '/speeches/:speech_id/like' do
     user_id = @userid
     speech = Speech.find(params[:speech_id])
-    if user_id != speech.user_id && Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
+    if !withSpeakerName(speech) && user_id != speech.user_id && Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
       ActiveRecord::Base.transaction do
         attendance = Attendance.where(user_id: user_id, speech_id: params[:speech_id]).first
         attendance.liked = true
@@ -379,7 +378,7 @@ class App < Sinatra::Base
     end
 
     speech = Speech.find(params[:speech_id])
-    if user_id != speech.user_id && Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
+    if !withSpeakerName(speech) && user_id != speech.user_id && Attendance.exists?(user_id: user_id, speech_id: params[:speech_id], liked: false)
       ActiveRecord::Base.transaction do
         attendance = Attendance.where(user_id: user_id, speech_id: params[:speech_id]).first
         attendance.liked = true
@@ -410,5 +409,12 @@ class App < Sinatra::Base
     def get_binding
       binding
     end
+  end
+
+  # does this speech has speaker_name?
+  # return true if has
+  # return false otherwise
+  def withSpeakerName(speech)
+    return speech.speaker_name.to_s.length != 0
   end
 end

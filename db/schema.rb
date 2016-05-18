@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151118095331) do
+ActiveRecord::Schema.define(version: 20160517081935) do
 
   create_table "attendances", force: :cascade do |t|
     t.integer  "user_id"
@@ -91,6 +91,9 @@ ActiveRecord::Schema.define(version: 20151118095331) do
     t.datetime "updated_at"
     t.integer  "event_id"
     t.string   "resource_name"
+    t.string   "video_resource_url",  default: ""
+    t.string   "video_resource_name", default: ""
+    t.string   "speaker_name"
   end
 
   add_index "speeches", ["category"], name: "index_speeches_on_category"
