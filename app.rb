@@ -65,8 +65,9 @@ class App < Sinatra::Base
       </div>"
 
       puts "send notification email for activity #{e.title}"
+      from = settings.email
       Mail.deliver do
-        from settings.email
+        from from
         to EMAIL_ADDRESS
         subject subject
         content_type 'text/html; charset=UTF-8'
