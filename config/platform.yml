@@ -1,0 +1,6 @@
+development:
+  email: 'rhinobird.worksap.test@gmail.com'
+
+
+production:
+  email: 'rhinobird.worksap@gmail.com'

@@ -1,14 +1,18 @@
 require 'sinatra/base'
 require 'sinatra/activerecord'
+require 'sinatra/config_file'
 require 'rufus-scheduler'
 require 'mail'
 
 EMAIL_ADDRESS = ENV['EMAIL_ADDRESS'] || 'wang_bo@worksap.co.jp'
-class App < Sinatra::Base
+SCHEDULER = Rufus::Scheduler.new
 
-  scheduler = Rufus::Scheduler.new
-  
-  scheduler.every '30s' do
+class App < Sinatra::Base
+  register Sinatra::ConfigFile
+
+  config_file './config/platform.yml'
+
+  SCHEDULER.every '30s' do
     now = DateTime.now
     half_an_hour = 30.minute
     half_an_hour_later = now + half_an_hour
@@ -60,9 +64,10 @@ class App < Sinatra::Base
           <p style='text-align: center;'>Designed by ATE-Shanghai, © Works Applications Co.,Ltd.</p>
       </div>"
 
-      puts "send notification email for activity #{e.title}"
+      puts "send reminder email for activity #{e.title}"
+      from = settings.email
       Mail.deliver do
-        from 'rhinobird.worksap@gmail.com'
+        from from
         to EMAIL_ADDRESS
         subject subject
         content_type 'text/html; charset=UTF-8'
@@ -74,8 +79,8 @@ class App < Sinatra::Base
   options = { :address              => 'smtp.gmail.com',
               :port                 => 587,
               :domain               => 'www.gmail.com',
-              :user_name            => 'rhinobird.worksap',
-              :password             => 'worksapplication',
+              :user_name            => settings.email,
+              :password             => ENV['EMAIL_PASSWORD'],
               :authentication       => 'plain',
               :enable_starttls_auto => true  }
   Mail.defaults do
