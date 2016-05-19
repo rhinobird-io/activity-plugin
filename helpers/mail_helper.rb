@@ -34,7 +34,6 @@ end
 
 def sendCreateActivityEmail(speech)
   subject = "[RhinoBird] Join activity #{speech.title} with us"
-  puts speech.speaker_name.nil?
   body = "<style>
             table tr td {
                 padding: 4px 8px;
@@ -85,9 +84,8 @@ def sendCreateActivityEmail(speech)
         </div>"
 
   from = settings.email
-  scheduler = Rufus::Scheduler.new
-  scheduler.in '5s' do
-    puts "send notification email for activity #{speech.title}"
+  SCHEDULER.in '5s' do
+    puts "send new activity email for activity #{speech.title}"
     Mail.deliver do
       from from
       to EMAIL_ADDRESS

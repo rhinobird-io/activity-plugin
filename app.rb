@@ -5,14 +5,14 @@ require 'rufus-scheduler'
 require 'mail'
 
 EMAIL_ADDRESS = ENV['EMAIL_ADDRESS'] || 'wang_bo@worksap.co.jp'
+SCHEDULER = Rufus::Scheduler.new
+
 class App < Sinatra::Base
   register Sinatra::ConfigFile
 
   config_file './config/platform.yml'
 
-  scheduler = Rufus::Scheduler.new
-  
-  scheduler.every '30s' do
+  SCHEDULER.every '30s' do
     now = DateTime.now
     half_an_hour = 30.minute
     half_an_hour_later = now + half_an_hour
@@ -64,7 +64,7 @@ class App < Sinatra::Base
           <p style='text-align: center;'>Designed by ATE-Shanghai, © Works Applications Co.,Ltd.</p>
       </div>"
 
-      puts "send notification email for activity #{e.title}"
+      puts "send reminder email for activity #{e.title}"
       from = settings.email
       Mail.deliver do
         from from
