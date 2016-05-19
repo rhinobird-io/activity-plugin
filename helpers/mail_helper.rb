@@ -1,8 +1,9 @@
 require 'rest_client'
+require 'rufus-scheduler'
 
 class MailHelper
   NOTIFICATION_URL = ENV['NOTIFICATION_URL'] || 'http://localhost:8000/platform/api/users/notifications'
-  EMAIL_ADDRESS = ENV['EMAIL_ADDRESS'] || 'wang_bo@worksap.co.jp'
+
 
   def self.send(to, content, url, subject, body, cookies, x_user)
     RestClient.post(
@@ -28,9 +29,13 @@ class MailHelper
     )
   end
 
-  def self.sendCreateActivityEmail(speech)
-    subject = "[RhinoBird] Join activity #{speech.title} with us"
-    body = `<style>
+
+end
+
+def sendCreateActivityEmail(speech)
+  subject = "[RhinoBird] Join activity #{speech.title} with us"
+  puts speech.speaker_name.nil?
+  body = "<style>
             table tr td {
                 padding: 4px 8px;
             }
@@ -40,49 +45,51 @@ class MailHelper
                 text-align: right;
             }
         </style>
-        <div style="max-width: 600px; margin: auto;">
-          <div style="font-size: 1.2em;">
+        <div style='max-width: 600px; margin: auto;'>
+          <div style='font-size: 1.2em;'>
               This time we will hold below activity:
           </div>
           <br/>
-          <table style="margin: auto; text-align: left;">
+          <table style='margin: auto; text-align: left;'>
               <tbody>
               <tr>
-                <td class="title">Subject</td>
+                <td class='title'>Subject</td>
                 <td>#{speech.title}</td>
               </tr>
               <tr>
-                <td class="title">Description</td>
+                <td class='title'>Description</td>
                 <td>#{speech.description}</td>
               </tr>
               <tr>
-                <td class="title">When</td>
+                <td class='title'>When</td>
                 <td>#{speech.time.in_time_zone('Beijing')}</td>
               </tr>
               <tr>
-                <td class="title">Duration</td>
+                <td class='title'>Duration</td>
                 <td>#{speech.expected_duration} min</td>
               </tr>
               <div>
               </div>
               </tbody>
           </table>
-          <div style="margin: 32px auto;">Want more details? <a href='http://rhinobird.workslan/platform/activity/activities/${speech.id}'>View</a> the details on RhinoBird</div>
-          #{
-            speech.speaker_name ?
-             '' :
-             `<div style="margin: 32px auto;">
-                Click join on <a href='http://rhinobird.workslan/platform/activity/activities/${speech.id}'>details page</a> to receive the latest information!
-              </div>`
+          <div style='margin: 32px auto;'>Want more details? <a href='http://rhinobird.workslan/platform/activity/activities/#{speech.id}'>View</a> the details on RhinoBird</div>
+          #{withSpeakerName(speech) ? '' :
+                "<div style='margin: 32px auto;'>
+                  Click join on <a href='http://rhinobird.workslan/platform/activity/activities/#{speech.id}'>details page</a> to receive the latest information!
+                </div>"
           }
           <p>Sent from RhinoBird platform.</p>
           <p>If you have any question or feedback, contact with us at works-college@ml.worksap.com</p>
           <hr>
-          <p style="text-align: center;">Designed by ATE-Shanghai, © Works Applications Co.,Ltd.</p>
-        </div>`
+          <p style='text-align: center;'>Designed by ATE-Shanghai, © Works Applications Co.,Ltd.</p>
+        </div>"
 
+  from = settings.email
+  scheduler = Rufus::Scheduler.new
+  scheduler.in '5s' do
+    puts "send notification email for activity #{speech.title}"
     Mail.deliver do
-      from settings.email
+      from from
       to EMAIL_ADDRESS
       subject subject
       content_type 'text/html; charset=UTF-8'
