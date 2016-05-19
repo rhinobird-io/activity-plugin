@@ -202,6 +202,7 @@ class App < Sinatra::Base
       ActiveRecord::Base.transaction do
         speech.status = Constants::SPEECH_STATUS::CONFIRMED
         speech.save!
+        MailHelper::sendCreateActivityEmail(speech)
       end
       speech.to_json(include: :comments)
     else
