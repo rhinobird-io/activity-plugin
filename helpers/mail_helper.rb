@@ -83,7 +83,7 @@ def sendCreateActivityEmail(speech)
           <p style='text-align: center;'>Designed by ATE-Shanghai, © Works Applications Co.,Ltd.</p>
         </div>"
 
-  from = settings.email
+  from = ENV['NOTIFY_EMAIL'] || settings.email
   SCHEDULER.in '5s' do
     puts "send new activity email for activity #{speech.title}"
     Mail.deliver do
