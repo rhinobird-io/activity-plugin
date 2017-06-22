@@ -65,7 +65,7 @@ class App < Sinatra::Base
       </div>"
 
       puts "send reminder email for activity #{e.title}"
-      from = settings.email
+      from = ENV['NOTIFY_EMAIL'] || settings.email
       Mail.deliver do
         from from
         to EMAIL_ADDRESS
@@ -76,11 +76,11 @@ class App < Sinatra::Base
     }
   end
 
-  options = { :address              => 'smtp.gmail.com',
-              :port                 => 587,
-              :domain               => 'www.gmail.com',
-              :user_name            => settings.email,
-              :password             => ENV['EMAIL_PASSWORD'],
+  options = { :address              => ENV['SMTP_SERVER'],
+              :port                 => ENV['SMTP_PORT'] || 25,
+              :domain               => ENV['SMTP_DOMAIN'] || ENV['SMTP_SERVER'],
+              :user_name            => ENV['AUTH_EMAIL'],
+              :password             => ENV['AUTH_EMAIL_PASSWORD'],
               :authentication       => 'plain',
               :enable_starttls_auto => true  }
   Mail.defaults do
