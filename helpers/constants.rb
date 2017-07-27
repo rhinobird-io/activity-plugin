@@ -53,4 +53,6 @@ module Constants
     NORMAL = "normal"
     VIDEO = "video"
   end
+
+  VIDEO_DIRECTORY = "video"
 end

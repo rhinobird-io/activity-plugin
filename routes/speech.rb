@@ -342,6 +342,32 @@ class App < Sinatra::Base
     speech.to_json(include: [:audiences, :comments])
   end
 
+  post '/speeches/:speech_id/videos/upload' do
+    admin_required!
+    speech_id = params[:speech_id]
+    speech = Speech.find(speech_id)
+    tempfile = params[:file][:tempfile]
+    target = Constants::VIDEO_DIRECTORY + "/activity_#{speech_id}.mp4"
+    File.open(target, 'w') do |f|
+      f.write tempfile.read
+    end
+    speech.to_json(include: [:audiences, :comments])
+  end
+
+  delete '/speeches/:speech_id/videos/delete' do
+    admin_required!
+    speech_id = params[:speech_id]
+    speech = Speech.find(speech_id)
+    video_file_path = Constants::VIDEO_DIRECTORY + "/activity_#{speech_id}.mp4"
+    File.delete(video_file_path) if File.exists?(video_file_path)
+    speech.to_json(include: [:audiences, :comments])
+  end
+
+  get '/speeches/:speech_id/video' do
+    speech_id = params[:speech_id]
+    video_file_path = Constants::VIDEO_DIRECTORY + "/activity_#{speech_id}.mp4"
+    send_file(video_file_path, stream: true, buffer_size: 512)
+  end
 
   # mark user likes a speech and add points to the speaker
   post '/speeches/:speech_id/like' do
