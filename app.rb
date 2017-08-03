@@ -82,7 +82,8 @@ class App < Sinatra::Base
               :user_name            => ENV['AUTH_EMAIL'],
               :password             => ENV['AUTH_EMAIL_PASSWORD'],
               :authentication       => 'plain',
-              :enable_starttls_auto => true  }
+              :enable_starttls_auto => true,
+              :openssl_verify_mode  => 'none'}
   Mail.defaults do
     delivery_method :smtp, options
   end
